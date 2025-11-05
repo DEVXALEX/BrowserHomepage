@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Start Page</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+    <div class="background-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <div id="section-modal" class="modal-backdrop">
+        <form class="modal-form" id="section-form">
+            <h3>Add New Section</h3>
+            <div class="form-group">
+                <label for="section-title-input">Section Title</label>
+                <input type="text" id="section-title-input" required autocomplete="off">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="form-btn-cancel" id="cancel-section-form">Cancel</button>
+                <button type="submit" class="form-btn-save">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="link-modal" class="modal-backdrop">
+        <form class="modal-form" id="link-form">
+            <h3>Add New Link</h3>
+            <input type="hidden" id="link-category-id">
+            <div class="form-group">
+                <label for="link-name-input">Link Name</label>
+                <input type="text" id="link-name-input" placeholder="e.g., Google" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="link-url-input">Link URL</label>
+                <input type="text" id="link-url-input" placeholder="https://google.com" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="link-icon-input">Font Awesome Icon (Optional)</label>
+                <input type="text" id="link-icon-input" placeholder="fa-brands fa-google" autocomplete="off">
+                <p class="form-help-text">
+                    Leave empty to auto-fetch icon. 
+                    Or, find one <a href="https://fontawesome.com/search?m=free&s=brands,solid" target="_blank">here</a>.
+                </p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="form-btn-cancel" id="cancel-link-form">Cancel</button>
+                <button type="submit" class="form-btn-save">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="bookmarks-modal" class="modal-backdrop">
+        <div class="bookmarks-container">
+            <div class="bookmarks-header">
+                <h3><i class="fa-solid fa-bookmark"></i> Temporary Bookmarks</h3>
+                <button id="close-bookmarks-modal" class="close-btn">×</button>
+            </div>
+            
+            <div class="bookmarks-content">
+                <ul id="bookmarks-list">
+                    </ul>
+            </div>
+
+            <form class="bookmarks-form" id="bookmarks-form">
+                <input type="text" id="bookmark-name-input" placeholder="Bookmark Name" required autocomplete="off">
+                <input type="text" id="bookmark-url-input" placeholder="https://..." required autocomplete="off">
+                <button type="submit" class="form-btn-save"><i class="fa-solid fa-plus"></i> Add</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="notes-modal" class="modal-backdrop">
+        <div class="notes-app-container">
+            <div class="notes-sidebar">
+                <button class="notes-btn-new" id="notes-add-btn">
+                    <i class="fa-solid fa-plus"></i> New Note
+                </button>
+                <ul id="notes-list">
+                    </ul>
+            </div>
+            <div class="notes-editor">
+                <button class="close-btn" id="notes-close-btn">×</button>
+                <div id="note-editor-container" class="hidden">
+                    <input type="text" id="note-title-input" placeholder="Note Title">
+                    <textarea id="note-content-textarea" placeholder="Start writing..."></textarea>
+                    <div class="notes-editor-actions">
+                        <button class="notes-btn-save" id="note-save-btn">
+                            <i class="fa-solid fa-save"></i> Save
+                        </button>
+                        <button class="notes-btn-discard" id="note-discard-btn">
+                            <i class="fa-solid fa-times"></i> Discard
+                        </button>
+                        <button class="notes-btn-delete" id="note-delete-btn">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                <div id="note-editor-placeholder">
+                    <i class="fa-solid fa-note-sticky"></i>
+                    <p>Select a note from the list, or create a new one.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="todo-modal" class="modal-backdrop">
+        <div class="todo-container">
+            <div class="todo-header">
+                <h3><i class="fa-solid fa-list-check"></i> To-Do List</h3>
+                <button id="close-todo-modal" class="close-btn">×</button>
+            </div>
+            
+            <div class="todo-content">
+                <ul id="todo-list">
+                    </ul>
+            </div>
+
+            <form class="todo-form" id="todo-form">
+                <input type="text" id="todo-input" placeholder="New task..." required autocomplete="off">
+                <button type="submit" class="form-btn-save"><i class="fa-solid fa-plus"></i> Add</button>
+            </form>
+        </div>
+    </div>
+    
+    
+    <div id="main-content">
+        <main>
+            <header>
+                <h1 id="greeting"></h1>
+                <div id="clock"></div>
+            </header>
+
+            <section class="search-container">
+                <form id="search-form" action="https://www.google.com/search" method="get" target="_blank">
+                    <input type="text" id="search-input" name="q" placeholder="Search Google..." autocomplete="off">
+                    <button type="submit" id="search-button">Search</button>
+                </form>
+                
+                <div class="search-toggle-container">
+                    <i id="search-mode-icon" class="fa-brands fa-google"></i>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="search-toggle-switch">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="copy-feedback">Copied to clipboard!</span>
+                </div>
+            </section>
+            
+            <nav class="links-container" id="links-container">
+                </nav>
+            
+            <div id="add-section-btn-container">
+                <button id="add-section-btn">
+                    <i class="fa-solid fa-plus"></i> Add Section
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <aside id="widget-sidebar">
+        <button class="widget-btn" id="todo-toggle-btn" title="To-Do List">
+            <i class="fa-solid fa-list-check"></i>
+        </button>
+        <button class="widget-btn" id="notes-toggle-btn" title="Notes">
+            <i class="fa-solid fa-note-sticky"></i>
+        </button>
+        <button class="widget-btn" id="bookmarks-toggle" title="Temporary Bookmarks">
+            <i class="fa-solid fa-bookmark"></i>
+        </button>
+        <button class="widget-btn" id="icon-toggle" title="Toggle Icon-Only Mode">
+            <i class="fa-solid fa-table-cells"></i>
+        </button>
+        <button class="widget-btn" id="edit-toggle" title="Toggle Edit Mode">
+            <i class="fa-solid fa-pencil"></i>
+        </button>
+    </aside>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
