@@ -106,6 +106,19 @@ header {
 #greeting { font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem; }
 #clock { font-size: 1.5rem; font-weight: 500; color: var(--text-secondary); }
 
+/* ✨ NEW: Quote Display Styles */
+#quote-display {
+    font-size: 1rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-top: 1rem;
+    max-width: 600px; /* Don't let it get too wide */
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
 /* --- Search Bar --- */
 .search-container { 
     margin-bottom: 2.5rem; 
@@ -147,18 +160,24 @@ header {
     color: var(--text-secondary);
 }
 
-/* Style for the single, dynamic icon */
 #search-mode-icon {
     font-size: 1.25rem;
-    color: var(--text-secondary); /* Default Google color */
+    color: var(--text-secondary);
     transition: color 0.4s ease;
-    width: 20px; /* Fixed width so layout doesn't jump */
+    width: 20px;
     text-align: center;
 }
 #search-mode-icon.gemini-icon {
-    color: var(--gemini-color); /* Specific color for Gemini */
+    color: var(--gemini-color);
 }
-
+/* Style for the Gemini image icon */
+#search-mode-icon .gemini-img-icon {
+    height: 1.25rem;
+    width: auto;
+    object-fit: contain;
+    vertical-align: middle;
+    filter: drop-shadow(0 0 5px var(--gemini-color));
+}
 
 .search-toggle-container #copy-feedback {
     color: var(--save-color);
@@ -166,7 +185,6 @@ header {
     font-weight: 500;
     opacity: 0;
     transition: opacity 0.3s ease;
-    /* Give it a fixed width to prevent layout shift */
     width: 130px; 
     text-align: left;
     padding-left: 0.25rem;

@@ -29,6 +29,55 @@
 // DYNAMIC WIDGET MANAGER
 // =====================================================
 
+// ✨ NEW: Quote list
+const motivationalQuotes = [
+    "The only way to do great work is to love what you do. - Steve Jobs",
+    "Believe you can and you're halfway there. - Theodore Roosevelt",
+    "Your limitation—it's only your imagination. - Unknown",
+    "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
+    "Push yourself, because no one else is going to do it for you. - Unknown",
+    "Great things never come from comfort zones. - Unknown",
+    "Success is not final, failure is not fatal: it is the courage to continue that counts. - Winston Churchill",
+    "The best way to predict the future is to create it. - Abraham Lincoln",
+    "You are never too old to set another goal or to dream a new dream. - C.S. Lewis",
+    "It's not whether you get knocked down, it's whether you get up. - Vince Lombardi",
+    "Act as if what you do makes a difference. It does. - William James",
+    "The secret of getting ahead is getting started. - Mark Twain",
+    "What you get by achieving your goals is not as important as what you become by achieving your goals. - Zig Ziglar",
+    "Strive not to be a success, but rather to be of value. - Albert Einstein",
+    "Life is 10% what happens to us and 90% how we react to it. - Charles R. Swindoll",
+"The secret of getting ahead is getting started. – Mark Twain",
+"Don't watch the clock; do what it does. Keep going. – Sam Levenson",
+"The only thing standing between you and your goal is the story you keep telling yourself as to why you can't achieve it. – Jordan Belfort",
+"You don't have to be great to start, but you have to start to be great. – Zig Ziglar",
+"Action is the foundational key to all success. – Pablo Picasso",
+"A year from now you may wish you had started today. – Karen Lamb",
+"We are what we repeatedly do. Excellence, then, is not an act, but a habit. – Aristotle",
+
+"The best time to plant a tree was 20 years ago. The second best time is now. – Chinese Proverb",
+
+"Continuous improvement is better than delayed perfection. – Mark Twain",
+
+"Small progress is still progress. – Unknown",
+
+"The expert in anything was once a beginner. – Helen Hayes",
+
+"Be better today than you were yesterday. – Unknown",
+
+"Life is 10% what happens to us and 90% how we react to it. – Charles R. Swindoll",
+
+"It does not matter how slowly you go as long as you do not stop. – Confucius",
+"The only person you are destined to become is the person you decide to be. – Ralph Waldo Emerson",
+
+"Everything you’ve ever wanted is on the other side of fear. – George Addair",
+
+"Act as if what you do makes a difference. It does. – William James",
+
+"The future belongs to those who believe in the beauty of their dreams. – Eleanor Roosevelt",
+
+"Discipline is the bridge between goals and accomplishment.– Jim Rohn" 
+];
+
 document.addEventListener('DOMContentLoaded', () => {
     
     // --- Default Data ---
@@ -72,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isGeminiMode = false;
     
     const linksContainer = document.getElementById('links-container');
+    const quoteDisplay = document.getElementById('quote-display'); // ✨ NEW
     
     // Sidebar Buttons
     const editToggleButton = document.getElementById('edit-toggle');
@@ -84,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchForm = document.getElementById('search-form');
     const searchInput = document.getElementById('search-input');
     const searchToggleSwitch = document.getElementById('search-toggle-switch');
-    const searchModeIcon = document.getElementById('search-mode-icon'); // ✨ NEW
+    const searchModeIcon = document.getElementById('search-mode-icon');
     const copyFeedback = document.getElementById('copy-feedback');
 
     // Section Modal
@@ -125,6 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const todoForm = document.getElementById('todo-form');
     const todoInput = document.getElementById('todo-input');
 
+
+    // =====================================================
+    // ✨ NEW: QUOTE FUNCTION
+    // =====================================================
+    function displayRandomQuote() {
+        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        if (quoteDisplay) {
+            quoteDisplay.textContent = `"${motivationalQuotes[randomIndex]}"`;
+        }
+    }
 
     // =====================================================
     // CORE LINK FUNCTIONS
@@ -440,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ✨ MODIFIED: Search Toggle Function
     function setSearchMode(isGemini) {
         isGeminiMode = isGemini;
         searchToggleSwitch.checked = isGemini;
@@ -449,12 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
             searchInput.placeholder = 'Ask Gemini (text will be copied)...';
             searchForm.action = 'https://gemini.google.com/';
             searchInput.name = '';
-            searchModeIcon.className = 'fa-solid fa-sparkle gemini-icon'; // Change icon
+            searchModeIcon.className = 'fa-solid fa-sparkle gemini-icon';
         } else {
             searchInput.placeholder = 'Search Google...';
             searchForm.action = 'https://www.google.com/search';
             searchInput.name = 'q';
-            searchModeIcon.className = 'fa-brands fa-google'; // Change icon
+            searchModeIcon.className = 'fa-brands fa-google';
         }
         localStorage.setItem('searchMode', isGemini ? 'gemini' : 'google');
     }
@@ -612,30 +671,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ✨ MODIFIED: Search Form
     searchForm.addEventListener('submit', (e) => {
         if (isGeminiMode) {
-            e.preventDefault(); // Stop submission ONLY for Gemini
+            e.preventDefault(); 
             const searchText = searchInput.value;
             if (!searchText) return;
     
             navigator.clipboard.writeText(searchText)
                 .then(() => {
-                    // Show feedback
                     copyFeedback.classList.add('visible');
                     setTimeout(() => {
                         copyFeedback.classList.remove('visible');
                     }, 2000);
                     
                     window.open('https://gemini.google.com/', '_blank');
-                    searchInput.value = ''; // Clear input after copy
+                    searchInput.value = '';
                 })
                 .catch(err => {
                     console.error('Failed to copy: ', err);
                     window.open('https://gemini.google.com/', '_blank');
                 });
         }
-        // If not Gemini mode, the form submits as normal
     });
 
 
@@ -757,4 +813,5 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Render the final page ---
     renderPage();
+    displayRandomQuote(); // ✨ NEW
 });
