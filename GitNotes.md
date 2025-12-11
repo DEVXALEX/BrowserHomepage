@@ -85,3 +85,25 @@ git remote show origin
 ### Warning: "LF will be replaced by CRLF"
 *   **Meaning:** Windows uses different line-endings (CRLF) than Linux/Mac (LF). Git is automatically converting them for compatibility.
 *   **Action:** Ignore it. It is normal.
+
+## 5. Learning Roadmap (What Next?)
+
+### A. Level 2: Isolation (Branching)
+currently, you work on `main`. If you break `main`, your app is broken.
+*   **Goal:** Learn to create "sandboxes" for every new feature.
+*   **Commands:** `git checkout -b feature-name`, `git switch`.
+
+### B. Level 3: Undo Button (Restoring)
+Everyone makes mistakes.
+*   **Goal:** Learn how to go back 10 minutes, 1 hour, or 1 day.
+*   **Commands:** `git restore`, `git reset`, `git revert`.
+
+### C. Level 4: Collaboration (Pull Requests)
+How real teams work.
+*   **Goal:** Instead of merging yourself, you ask GitHub to merge it for you (allowing for code review).
+*   **Concept:** "Pull Request" (PR) flow on GitHub.com.
+
+### D. Level 5: Disaster Management (Conflicts)
+What happens when two people check the same line of code?
+*   **Goal:** Learn to manually resolve conflicts without panicking.
+
