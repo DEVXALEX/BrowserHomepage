@@ -1,0 +1,66 @@
+/* =====================================================
+   LAYOUT STYLES
+===================================================== */
+
+#main-content {
+    flex-grow: 1;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+main {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN FOR LARGE SCREENS
+===================================================== */
+
+/* Large Screens (e.g., 1440p) */
+@media (min-width: 1440px) {
+    :root {
+        font-size: 18px;
+    }
+
+    main {
+        max-width: 1200px;
+    }
+}
+
+/* Extra Large Screens (e.g., Full HD scaled or larger) */
+@media (min-width: 1920px) {
+    :root {
+        font-size: 20px;
+    }
+
+    main {
+        max-width: 95%;
+        /* Use more width */
+    }
+
+    header {
+        margin-bottom: 1.5rem;
+        /* Reduce vertical space */
+    }
+}
+
+/* Ultra Large Screens (e.g., 4K) */
+@media (min-width: 2560px) {
+    :root {
+        font-size: 24px;
+    }
+
+    main {
+        max-width: 98%;
+        /* Maximize width */
+    }
+
+    header {
+        margin-bottom: 2rem;
+    }
+}

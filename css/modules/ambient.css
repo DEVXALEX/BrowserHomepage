@@ -1,0 +1,124 @@
+/* =====================================================
+   AMBIENT MODULE
+===================================================== */
+
+#ambient-container {
+    width: 400px;
+    max-width: 90%;
+}
+
+.ambient-controls {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.now-playing {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.visualizer {
+    display: flex;
+    gap: 3px;
+    height: 15px;
+    align-items: flex-end;
+}
+
+.visualizer .bar {
+    width: 3px;
+    background: var(--accent-color);
+    height: 20%;
+    animation: visualize 0.5s infinite alternate;
+}
+
+.visualizer .bar:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.visualizer .bar:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+@keyframes visualize {
+    to {
+        height: 100%;
+    }
+}
+
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#ambient-play-pause {
+    background: var(--accent-color);
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    color: var(--bg-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+#ambient-play-pause:hover {
+    transform: scale(1.1);
+}
+
+#ambient-volume {
+    flex: 1;
+    accent-color: var(--accent-color);
+    height: 4px;
+}
+
+.sound-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sound-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.sound-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sound-btn i {
+    transition: transform 0.3s ease;
+}
+
+.sound-btn:hover i {
+    transform: scale(1.4);
+}
+
+.sound-btn.active {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border-color: var(--accent-color);
+}

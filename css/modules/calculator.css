@@ -1,0 +1,92 @@
+/* =====================================================
+   CALCULATOR MODULE
+===================================================== */
+
+.calculator-container {
+    background: var(--widget-color);
+    /* Corrected from var(--modal-bg) which wasn't defined in variables.css */
+    padding: 20px;
+    border-radius: 15px;
+    width: 320px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calc-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+}
+
+.calc-display {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+}
+
+#calc-history {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    height: 1.2em;
+    margin-bottom: 5px;
+}
+
+#calc-result {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calc-keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.calc-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.calc-btn:hover {
+    filter: brightness(1.2);
+}
+
+.num-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+}
+
+.op-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.eq-btn {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    grid-column: span 2;
+    /* Make equals button wider */
+}
+
+.zero-btn {
+    grid-column: span 2;
+    /* Make zero button wider */
+}

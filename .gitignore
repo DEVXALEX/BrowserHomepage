@@ -1,0 +1,25 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+# Ignore any json files that might be local backups (except package.json if it existed)
+*.json
+
+# Ignore temporary or log files
+*.log
+npm-debug.log*
+
+# Explicitly allow necessary files if they were json (none currently)
+# !manifest.json

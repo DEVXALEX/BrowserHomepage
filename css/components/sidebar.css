@@ -1,0 +1,241 @@
+/* =====================================================
+   WIDGET SIDEBAR
+===================================================== */
+
+#widget-sidebar {
+    width: 70px;
+    flex-shrink: 0;
+    height: 100vh;
+    background: transparent;
+    border-left: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    gap: 0.5rem;
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(0);
+}
+
+.widget-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.widget-btn:hover {
+    background: transparent;
+    color: var(--text-color);
+    transform: none;
+}
+
+.widget-btn i {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.widget-btn:hover i {
+    transform: scale(1.4);
+}
+
+.widget-btn.active {
+    background-color: var(--accent-color);
+    color: #111;
+}
+
+/* Sidebar Icon Colors */
+#todo-toggle-btn i {
+    color: #ffd700;
+}
+
+#notes-toggle-btn i {
+    color: #ff9f43;
+}
+
+#bookmarks-toggle i {
+    color: #ff6b6b;
+}
+
+#ambient-toggle-btn i {
+    color: #54a0ff;
+}
+
+#calculator-toggle-btn i {
+    color: #1dd1a1;
+}
+
+#bg-toggle-btn i {
+    color: #a29bfe;
+}
+
+#icon-toggle i {
+    color: #00d2d3;
+}
+
+#edit-toggle i {
+    color: #f368e0;
+}
+
+#settings-toggle-btn i {
+    color: #8395a7;
+}
+
+/* Staggered Animation for Sidebar Icons */
+body.sidebar-collapsed .widget-btn {
+    transform: translateX(50px);
+    opacity: 0;
+    transition-delay: 0s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(2) {
+    transition-delay: 0.15s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(3) {
+    transition-delay: 0.2s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(4) {
+    transition-delay: 0.25s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(5) {
+    transition-delay: 0.3s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(6) {
+    transition-delay: 0.35s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(7) {
+    transition-delay: 0.4s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(8) {
+    transition-delay: 0.45s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(9) {
+    transition-delay: 0.5s;
+}
+
+body:not(.sidebar-collapsed) .widget-btn:nth-child(10) {
+    transition-delay: 0.55s;
+}
+
+/* Hidden Button Logic */
+.hidden-btn {
+    display: none;
+}
+
+body.edit-mode-active .hidden-btn {
+    display: flex;
+}
+
+/* Sidebar Toggle */
+#sidebar-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+#sidebar-toggle:hover {
+    background: transparent;
+    color: var(--text-color);
+    transform: none;
+}
+
+#sidebar-toggle i {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#sidebar-toggle:hover i {
+    transform: scale(1.4);
+}
+
+/* Collapsed State */
+body.sidebar-collapsed #widget-sidebar {
+    transform: translateX(100%);
+    width: 70px;
+}
+
+body.sidebar-collapsed #sidebar-toggle {
+    right: 20px;
+}
+
+/* Responsive adjustments for sidebar */
+@media (min-width: 1440px) {
+    #widget-sidebar {
+        width: 80px;
+    }
+
+    .widget-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 1.4rem;
+    }
+
+    #sidebar-toggle {
+        right: 90px;
+    }
+}
+
+@media (min-width: 1920px) {
+    #widget-sidebar {
+        width: 90px;
+    }
+
+    .widget-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    #sidebar-toggle {
+        right: 100px;
+    }
+}
+
+@media (min-width: 2560px) {
+    #widget-sidebar {
+        width: 110px;
+    }
+
+    .widget-btn {
+        width: 75px;
+        height: 75px;
+        font-size: 1.8rem;
+    }
+
+    #sidebar-toggle {
+        right: 120px;
+    }
+}

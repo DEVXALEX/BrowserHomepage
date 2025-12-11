@@ -1,0 +1,344 @@
+/* =====================================================
+   CALENDAR MODULE
+===================================================== */
+
+#calendar-modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#calendar-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#calendar-modal.visible .calendar-split-view {
+    transform: translateY(0);
+}
+
+/* Base Modal Style */
+.calendar-split-view {
+    display: flex;
+    width: 90vw;
+    height: 80vh;
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transform: translateY(100vh);
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- FULL SCREEN MODE STYLES --- */
+#calendar-modal.full-screen {
+    background: #1a1a1a;
+    padding-top: 50px;
+    align-items: flex-start;
+}
+
+#calendar-modal.full-screen .calendar-grid-header {
+    padding-right: 6px;
+}
+
+#calendar-modal.full-screen .calendar-grid {
+    overflow-y: scroll;
+}
+
+#calendar-modal.full-screen .calendar-split-view {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+
+#calendar-modal.full-screen .calendar-panel {
+    flex: 2;
+}
+
+#calendar-modal.full-screen .day {
+    aspect-ratio: auto;
+    min-height: 100px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0.5rem;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+#calendar-modal.full-screen .day.has-notes::after {
+    display: none;
+}
+
+/* Note preview text in grid */
+.day-note-preview {
+    font-size: 0.7rem;
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: none;
+    text-align: left;
+}
+
+#calendar-modal.full-screen .day-note-preview {
+    display: block;
+}
+
+.day-number {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+/* Left Panel: Calendar */
+.calendar-panel {
+    flex: 1;
+    padding: 2rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.calendar-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--text-color);
+}
+
+.calendar-header button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calendar-header button:hover {
+    background: white;
+    color: black;
+}
+
+.calendar-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    gap: 0.5rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 0;
+    overflow-x: hidden;
+}
+
+.calendar-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.calendar-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.calendar-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.calendar-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.day {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    position: relative;
+    transition: all 0.2s ease;
+    aspect-ratio: 1;
+}
+
+.day:hover:not(.empty) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.day.today {
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.day.selected {
+    background: rgba(77, 148, 255, 0.2);
+    border: 1px solid var(--save-color);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(77, 148, 255, 0.3);
+}
+
+.day.has-notes::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    width: 4px;
+    height: 4px;
+    background-color: var(--save-color);
+    border-radius: 50%;
+}
+
+.day.prev-date,
+.day.next-date {
+    opacity: 0.3;
+}
+
+/* Right Panel: Date Notes */
+.date-notes-panel {
+    flex: 1;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.date-notes-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.selected-date-display {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+#selected-date-day {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--accent-color);
+}
+
+#selected-date-full {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.date-notes-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+#date-notes-list {
+    list-style: none;
+    padding: 0;
+}
+
+#date-notes-list li {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid var(--accent-color);
+    animation: fadeIn 0.3s ease;
+}
+
+.delete-note-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0 0.5rem;
+}
+
+.delete-note-btn:hover {
+    color: var(--delete-color);
+}
+
+.empty-note-state {
+    color: var(--text-secondary);
+    font-style: italic;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+#date-note-form {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#date-note-form input {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Inter', sans-serif;
+}
+
+#date-note-form input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+#date-note-form button {
+    background: var(--accent-color);
+    border: none;
+    color: black;
+    width: 50px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    transition: transform 0.2s ease;
+}
+
+#date-note-form button:hover {
+    transform: scale(1.05);
+}

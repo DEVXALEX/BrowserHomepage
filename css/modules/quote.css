@@ -1,0 +1,32 @@
+/* =====================================================
+   QUOTE MODULE
+===================================================== */
+
+#quote {
+    font-style: italic;
+    color: var(--text-color);
+    max-width: 600px;
+    margin: 2rem auto 0 auto;
+    text-align: center;
+    line-height: 1.6;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 0, 0, 0.8);
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease, opacity 0.2s ease;
+}
+
+#quote:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+#quote:active {
+    transform: translateY(0);
+}

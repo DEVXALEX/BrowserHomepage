@@ -1,0 +1,80 @@
+/* =====================================================
+   TOP NAVBAR
+===================================================== */
+
+#top-navbar {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    z-index: 1000;
+    display: flex;
+    /* Center links perfectly since logo is hidden */
+    justify-content: center;
+    align-items: center;
+    padding: 0 4rem;
+    background: transparent;
+    border-bottom: none;
+    transition: background 0.3s ease;
+}
+
+.nav-logo {
+    display: none;
+}
+
+.nav-logo:hover {
+    opacity: 1;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    /* Increased slightly for readability with serif */
+    font-weight: 400;
+    font-style: italic;
+    /* Added italic for elegance */
+    text-transform: capitalize;
+    /* Changed from uppercase for elegance */
+    letter-spacing: 1px;
+    color: #ffffff;
+    cursor: pointer;
+    position: relative;
+    padding: 0.5rem 0;
+    transition: color 0.3s ease;
+}
+
+.nav-links li:hover {
+    color: var(--text-color);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.nav-links li::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--text-color);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-links li:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-extra {
+    width: 24px;
+    /* Balance logo width approx */
+}

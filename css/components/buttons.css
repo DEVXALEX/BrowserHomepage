@@ -1,0 +1,148 @@
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.modal-form button {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.form-btn-cancel {
+    background: var(--hover-color);
+    color: var(--text-color);
+}
+
+.form-btn-save {
+    background: var(--accent-color);
+    color: #111;
+}
+
+.form-btn-save i {
+    transition: transform 0.3s ease;
+}
+
+.form-btn-save:hover i {
+    transform: scale(1.2);
+}
+
+/* Edit/Delete Buttons for items */
+.delete-btn {
+    display: none;
+    background: var(--delete-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 10;
+    line-height: 20px;
+    text-align: center;
+}
+
+.delete-link-btn {
+    display: none;
+    background: var(--delete-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    margin-left: 8px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.delete-link-btn:hover {
+    opacity: 1;
+}
+
+.edit-btn {
+    display: none;
+    background: var(--save-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: -8px;
+    right: 22px;
+    z-index: 10;
+    line-height: 20px;
+    text-align: center;
+}
+
+.edit-link-btn {
+    display: none;
+    background: var(--save-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    margin-left: 8px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-link-btn:hover {
+    opacity: 1;
+}
+
+body.edit-mode-active .delete-btn,
+body.edit-mode-active .delete-link-btn,
+body.edit-mode-active .edit-btn,
+body.edit-mode-active .edit-link-btn {
+    display: block;
+    /* or flex for edit-link-btn/edit-btn */
+}
+
+body.edit-mode-active .edit-btn,
+body.edit-mode-active .edit-link-btn {
+    display: flex;
+}
+
+.quick-add-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 8px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 5;
+}
+
+.quick-add-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+body.edit-mode-active .quick-add-btn {
+    display: none;
+}
