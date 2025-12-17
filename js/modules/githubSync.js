@@ -3,7 +3,8 @@
     const GIST_DESCRIPTION = 'Browser Homepage Auto-Backup';
 
     app.githubSync = {
-        token: '',
+        token: '', // Decrypted (RAM only)
+        encryptedToken: null, // Encrypted Object
         gistId: '',
         autoSync: false,
         lastSync: null,
@@ -11,7 +12,8 @@
         pendingRestoreData: null,
 
         init: function () {
-            this.token = app.Storage.getString('gh_token', '');
+            // 1. Read Storage
+            const rawToken = app.Storage.getString('gh_token', '');
             this.gistId = app.Storage.getString('gh_gistId', '');
             this.autoSync = app.Storage.getString('gh_autoSync') === 'true';
             this.lastSync = app.Storage.getString('gh_lastSync', '');
@@ -19,6 +21,30 @@
             this.cacheDOM();
             this.bindEvents();
 
+            // 2. Check Token Type
+            if (rawToken) {
+                try {
+                    const parsed = JSON.parse(rawToken);
+                    if (parsed.iv && parsed.data && parsed.salt) {
+                        // Case A: Encrypted Token
+                        this.encryptedToken = parsed;
+                        this.showUnlockModal(); // Block access until PIN
+                        return;
+                    }
+                } catch (e) { }
+
+                // Case B: Legacy Plain Text
+                console.warn("Legacy Plain-Text Token detected.");
+                this.token = rawToken;
+                this.finishInit();
+            } else {
+                // Case C: No Token
+                this.showSetupState();
+            }
+        },
+
+        // Called after successful unlock or legacy load
+        finishInit: function () {
             // UI State Init
             if (this.token) {
                 // Restore connection state
@@ -31,8 +57,6 @@
 
                 // Validate/Find gist if missing
                 if (!this.gistId) this.findOrCreateGist();
-            } else {
-                this.showSetupState();
             }
         },
 
@@ -53,9 +77,17 @@
             this.restoreStats = document.getElementById('restore-stats');
             this.restoreConfirmBtn = document.getElementById('restore-confirm-btn');
             this.restoreCancelBtn = document.getElementById('restore-cancel-btn');
+
+            // Session Unlock Modal
+            this.unlockModal = document.getElementById('session-unlock-modal');
+            this.unlockPinInput = document.getElementById('session-pin-input');
+            this.unlockBtn = document.getElementById('session-unlock-btn');
+            this.skipBtn = document.getElementById('session-skip-btn');
+            this.unlockError = document.getElementById('session-error-msg');
         },
 
         bindEvents: function () {
+            // ... Standard Events ...
             if (this.setupBtn) {
                 this.setupBtn.addEventListener('click', () => {
                     this.setupBtn.style.display = 'none';
@@ -117,24 +149,104 @@
                     this.debounceSync();
                 }
             });
+
+            // Unlock Modal Logic
+            if (this.unlockBtn) {
+                this.unlockBtn.addEventListener('click', () => this.handleUnlock());
+            }
+            if (this.unlockPinInput) {
+                this.unlockPinInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleUnlock();
+                });
+            }
+            if (this.skipBtn) {
+                this.skipBtn.addEventListener('click', () => {
+                    this.unlockModal.classList.remove('visible');
+                    this.updateStatus('Offline (Session Locked)', 'normal');
+                });
+            }
         },
 
         connect: async function (token) {
             this.updateStatus('Connecting...');
-            this.token = token;
 
-            // Verify token / Find Gist
+            // 1. Verify Token first (using plain text)
+            // We use a temporary object to test connection
+            const tempToken = token;
+
             try {
+                // Determine Gist ID (find or create)
+                // We'll borrow the logic from findOrCreateGist but we need to do it carefully
+                // to not save state yet.
+                // Actually, let's just Prompt for PIN FIRST.
+
+                const pin = prompt("🔐 Create a Master PIN to secure this token:\n(You will need this PIN every time you restart the browser)", "");
+                if (!pin || pin.length < 4) {
+                    alert("Connection Cancelled. PIN must be at least 4 digits.");
+                    this.updateStatus('Setup Cancelled');
+                    return;
+                }
+
+                // 2. Encrypt Token
+                this.updateStatus('Encrypting...');
+                const encrypted = await app.Crypto.encryptData(token, pin);
+
+                // 3. Save Encrypted Token
+                app.Storage.setString('gh_token', JSON.stringify(encrypted));
+
+                // 4. Set Memory State
+                this.token = token;
+                this.encryptedToken = encrypted;
+
+                // 5. Proceed with Sync Setup
                 const success = await this.findOrCreateGist();
                 if (success) {
-                    app.Storage.setString('gh_token', token);
-                    this.updateStatus('Connected & Ready', 'success');
+                    this.updateStatus('Connected & Encrypted', 'success');
                     this.showConnectedState();
                     this.checkForBackup();
                 }
+
             } catch (error) {
                 console.error(error);
                 this.updateStatus(`Connection Failed: ${error.message}`, 'error');
+                // Revert storage if failed?
+            }
+        },
+
+        showUnlockModal: function () {
+            if (this.unlockModal) {
+                this.unlockModal.classList.add('visible');
+                if (this.unlockPinInput) {
+                    this.unlockPinInput.value = '';
+                    this.unlockPinInput.focus();
+                }
+            }
+        },
+
+        handleUnlock: async function () {
+            const pin = this.unlockPinInput.value;
+            if (!this.encryptedToken || !pin) return;
+
+            this.unlockBtn.textContent = 'Decrypting...';
+            this.unlockError.textContent = '';
+
+            try {
+                const decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin);
+
+                // Verify it looks like a token?
+                if (!decryptedToken || !decryptedToken.startsWith('gh')) {
+                    // Soft check. 
+                }
+
+                this.token = decryptedToken;
+                this.unlockModal.classList.remove('visible');
+                this.finishInit(); // Resume init
+
+            } catch (e) {
+                console.error("Unlock failed", e);
+                this.unlockError.textContent = 'Incorrect PIN';
+            } finally {
+                this.unlockBtn.textContent = 'Unlock';
             }
         },
 

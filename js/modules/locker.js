@@ -71,8 +71,8 @@
         },
 
         open: function () {
-            if (!app.Storage.getString('gh_token')) {
-                alert('Please connect GitHub Sync first to use the Secure Locker.');
+            if (!app.githubSync || !app.githubSync.token) {
+                alert('Please connect GitHub Sync first (or Unlock Session) to use the Secure Locker.');
                 return;
             }
             this.modal.classList.add('visible');
@@ -117,43 +117,40 @@
                 console.log("Locker: Fetching file...");
                 // 1. Fetch Encrypted File
                 const encryptedFile = await this.fetchLockerFile();
-                console.log("Locker: File fetched", encryptedFile);
 
                 if (!encryptedFile) {
                     console.log("Locker: New Setup");
-                    // New Locker Setup
-                    // Derive key from PIN + random Salt
+                    // New Locker = New Salt
                     const salt = window.crypto.getRandomValues(new Uint8Array(16));
-                    window.appLockerCurrentSalt = salt; // Persist for saving
+                    window.appLockerCurrentSalt = salt;
 
                     console.log("Locker: Deriving Key (New)");
-                    masterKey = await this.deriveKey(pin, salt);
+                    masterKey = await app.Crypto.deriveKey(pin, salt);
                     console.log("Locker: Key Derived");
                     lockerData = { secrets: [] }; // Empty
 
                     this.showListView();
                 } else {
                     console.log("Locker: Existing Setup");
-                    // Existing Locker
                     const { salt, iv, data } = encryptedFile;
 
-                    // Re-derive key
-                    const saltBytes = this.hexToBuf(salt);
-                    window.appLockerCurrentSalt = saltBytes; // Persist for saving
+                    // Re-derive key (Salt is Hex String in file, need Buf for deriving)
+                    const saltBytes = app.Crypto.hexToBuf(salt);
+                    window.appLockerCurrentSalt = saltBytes;
 
                     console.log("Locker: Deriving Key (Existing)");
-                    masterKey = await this.deriveKey(pin, saltBytes);
+                    masterKey = await app.Crypto.deriveKey(pin, saltBytes);
 
-                    // Decrypt
+                    // Decrypt (Pass the object with Hex strings directly)
                     try {
                         console.log("Locker: Decrypting...");
-                        const decryptedJson = await this.decryptData(masterKey, this.hexToBuf(iv), this.hexToBuf(data));
-                        lockerData = JSON.parse(decryptedJson);
+                        // app.Crypto.decryptWithKey expects { iv: hex, data: hex }
+                        lockerData = await app.Crypto.decryptWithKey({ iv, data }, masterKey);
                         this.showListView();
                     } catch (e) {
                         console.error("Locker: Decryption Failed", e);
                         this.errorMsg.textContent = 'Incorrect PIN or Corrupted Data';
-                        masterKey = null; // Wipe invalid key
+                        masterKey = null;
                         window.appLockerCurrentSalt = null;
                     }
                 }
@@ -241,8 +238,8 @@
         saveLocker: async function () {
             if (!masterKey) return;
 
-            let saltBytes;
             // Retrieve Salt from memory
+            let saltBytes;
             if (window.appLockerCurrentSalt) {
                 saltBytes = window.appLockerCurrentSalt;
             } else {
@@ -251,18 +248,19 @@
             }
 
             try {
-                // Encrypt (New IV generated inside)
-                const encrypted = await this.encryptData(masterKey, lockerData);
+                // Encrypt (New IV generated inside, returns Hex Strings)
+                // Returns { salt, iv, data } - Salt is passed through as Hex
+                const encrypted = await app.Crypto.encryptWithKey(lockerData, masterKey, saltBytes);
 
-                // Construct File Object
+                // Construct File Object (Standard Format)
                 const fileContent = {
-                    salt: this.bufToHex(saltBytes),
-                    iv: this.bufToHex(encrypted.iv),
-                    data: this.bufToHex(encrypted.data)
+                    salt: encrypted.salt,
+                    iv: encrypted.iv,
+                    data: encrypted.data
                 };
 
                 // Save to Gist
-                const token = app.Storage.getString('gh_token');
+                const token = app.githubSync.token;
                 const gistId = app.Storage.getString('gh_gistId');
 
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -280,96 +278,38 @@
 
                 if (!response.ok) throw new Error('Failed to save to Cloud');
 
-                // Feedback? Blink the add button or something?
-                // alert('Saved');
-
             } catch (e) {
                 console.error(e);
                 alert('Failed to save secret to Cloud.');
             }
         },
 
-        // --- CRYPTO UTILS ---
-
-        deriveKey: async function (password, salt) {
-            // 1. Import Key material
-            const enc = new TextEncoder();
-            const keyMaterial = await window.crypto.subtle.importKey(
-                "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
-            );
-
-            // 2. Derive Key
-            return window.crypto.subtle.deriveKey(
-                {
-                    name: "PBKDF2",
-                    salt: salt,
-                    iterations: 100000,
-                    hash: "SHA-256"
-                },
-                keyMaterial,
-                { name: "AES-GCM", length: 256 },
-                false, // Non-exportable key!
-                ["encrypt", "decrypt"]
-            );
-        },
-
-        encryptData: async function (key, dataObj) {
-            const iv = window.crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV
-            const enc = new TextEncoder();
-            const encoded = enc.encode(JSON.stringify(dataObj));
-
-            const ciphertext = await window.crypto.subtle.encrypt(
-                { name: "AES-GCM", iv: iv },
-                key,
-                encoded
-            );
-
-            return {
-                iv: iv,
-                data: ciphertext
-            };
-        },
-
-        decryptData: async function (key, iv, ciphertext) {
-            const decrypted = await window.crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: iv },
-                key,
-                ciphertext
-            );
-            const dec = new TextDecoder();
-            return dec.decode(decrypted);
-        },
-
+        // Helper
         // --- GIST UTILS ---
 
         fetchLockerFile: async function () {
-            const token = app.Storage.getString('gh_token');
+            const LOCKER_FILENAME = 'locker.enc'; // Re-declare or assume scope? 
+            // LOCKER_FILENAME is defined at top of IIFE, so it is accessible.
+            const token = app.githubSync ? app.githubSync.token : '';
             const gistId = app.Storage.getString('gh_gistId');
             if (!token || !gistId) return null;
 
-            const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            if (!res.ok) return null;
-            const json = await res.json();
-            if (json.files && json.files[LOCKER_FILENAME]) {
-                return JSON.parse(json.files[LOCKER_FILENAME].content);
+            try {
+                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (!res.ok) return null;
+                const json = await res.json();
+                if (json.files && json.files[LOCKER_FILENAME]) {
+                    return JSON.parse(json.files[LOCKER_FILENAME].content);
+                }
+            } catch (e) {
+                console.error("Locker: Fetch Error", e);
             }
             return null;
         },
 
-        // Helpers
-        hexToBuf: function (hex) {
-            const matches = hex.match(/.{1,2}/g);
-            return new Uint8Array(matches ? matches.map(byte => parseInt(byte, 16)) : []);
-        },
-
-        bufToHex: function (buf) {
-            return Array.from(new Uint8Array(buf))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
-        },
-
+        // Helper
         escapeHtml: function (text) {
             if (!text) return '';
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")

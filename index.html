@@ -676,9 +676,32 @@
         </div>
     </div>
 
+    <!-- Session Unlock Modal (For Secure Token) -->
+    <div id="session-unlock-modal" class="modal-backdrop" style="z-index: 2000;">
+        <div class="modal-form"
+            style="width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; padding: 2rem;">
+            <i class="fa-solid fa-shield-halved" style="font-size: 3rem; color: #4dff88; margin-bottom: 1.5rem;"></i>
+            <h3 style="margin-bottom: 1rem;">Unlock Session</h3>
+            <p style="color: #ccc; margin-bottom: 1.5rem; text-align: center;">Enter your Master PIN to enable Cloud
+                Sync.</p>
+
+            <input type="password" id="session-pin-input" placeholder="Enter PIN" maxlength="8"
+                style="font-size: 1.5rem; letter-spacing: 0.5rem; text-align: center; width: 200px; padding: 0.5rem; border-radius: 8px; border: 1px solid #444; background: #222; color: white; margin-bottom: 1.5rem;">
+
+            <button id="session-unlock-btn" class="form-btn-save"
+                style="width: 100%; background: #2ea44f; margin-bottom: 1rem;">Unlock</button>
+
+            <button id="session-skip-btn"
+                style="background: none; border: none; color: #666; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">Skip
+                (Stay Offline)</button>
+            <p id="session-error-msg" style="color: #ff4d4d; font-size: 0.8rem; margin-top: 1rem; height: 1rem;"></p>
+        </div>
+    </div>
+
     <!-- Scripts (Order is important for Namespace Pattern) -->
     <script src="js/storage.js?v=2"></script>
     <script src="js/utils.js?v=2"></script>
+    <script src="js/modules/crypto.js?v=1"></script>
     <script src="js/modules/clock.js?v=2"></script>
     <script src="js/modules/quote.js?v=2"></script>
     <script src="js/modules/links.js?v=2"></script>
