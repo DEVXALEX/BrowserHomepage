@@ -7,3 +7,5 @@ New Rule - Keep adding fetures and bug fixes to FEATURE_HISTORY.md everytime cha
 New Rule - Keep adding new notes in git notes about what we learned this session at the end of the session
 
 we can also create a detailed session summery and keep it inside session summery folder as session history
+
+remove the unnecessary files backup and optional features from the repo and restructure the folders 
