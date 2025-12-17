@@ -81,7 +81,24 @@ git push
 *   **Why:** Sends your commits to the server.
 *   **Note:** The VERY first time, use `git push -u origin main`.
 
+
+### Finish Work (Merging)
+*   **Context:** You are happy with your feature and want to bring it into the main app.
+1.  **Switch to Main:**
+    ```powershell
+    git checkout main
+    ```
+2.  **Merge the Feature:**
+    ```powershell
+    git merge feature-name
+    ```
+3.  **Delete Branch (Optional):**
+    ```powershell
+    git branch -d feature-name
+    ```
+
 ## 5. Troubleshooting & Scenarios
+
 
 ### Scenario: "I want to overwrite the server" (Force Push)
 ```powershell
@@ -191,6 +208,15 @@ To check for changes on a GitHub repository without applying them to your local 
     ```powershell
     git status
     ```
+
+### Check History
+```powershell
+git log -n 5 --oneline
+```
+*   **`-n 5`**: Limit to the last 5 commits (keeps it short).
+*   **`--oneline`**: Condense each commit to a single line (Hash + Message).
+*   **Why:** "Show me a quick summary of what just happened."
+
 
 
 ## 8. Understanding Git Pointers

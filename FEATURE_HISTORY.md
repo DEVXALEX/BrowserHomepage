@@ -430,4 +430,34 @@ A focus on "Learning by Doing". Implemented strict Git workflows and cleaned up 
 - Documentation is precise and accessible.
 - New directory structure is in place.
 
+
+---
+
+## 9. Secure Token Storage (Vault)
+**Date:** 2025-12-18 | **Time:** 01:30
+
+### 🔐 What Was Added
+implemented a "Secure Vault" architecture to encrypt sensitive data (GitHub Tokens) in LocalStorage.
+
+### ✨ Features
+- **Client-Side Encryption:** Uses `AES-GCM` via Web Crypto API.
+- **Shared Crypto Module**: Created `js/modules/crypto.js` to standardize security logic.
+- **Session Unlock**: Users must enter a PIN once per session to decrypt the token in memory.
+- **Secure Locker Integration**: Refactored `locker.js` to use the new shared crypto module.
+
+### 📁 Files Modified
+- **New**: `js/modules/crypto.js`
+- **Modified**: 
+  - `js/modules/githubSync.js` (Added encryption flow)
+  - `js/modules/locker.js` (Refactored to use `app.Crypto`)
+  - `index.html` (Added Unlock Modal)
+  - `GitNotes.md` (Added `git log` and checkout documentation)
+
+### ✅ Verified Working
+- Token is stored as `{ salt, iv, data }` JSON in LocalStorage.
+- Unlock Modal appears on page load if encrypted token exists.
+- Sync works correctly after PIN entry.
+- Locker secrets can still be decrypted (using shared module).
+
 > **[View Detailed Session Summary](session_summary/session_2025-12-18.md)**
+
