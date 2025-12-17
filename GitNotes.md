@@ -44,6 +44,14 @@ git branch -M main
 ## 4. Daily Workflow (The Loop)
 The commands you will use 99% of the time.
 
+### Start New Work (Branching)
+```powershell
+git checkout -b feature-name
+```
+*   **When:** BEFORE you start writing any new code.
+*   **Why:** Creates a new "sandbox" (branch) AND switches you into it immediately.
+*   **Composition:** It combines `git branch feature-name` (create) + `git checkout feature-name` (switch).
+
 ### Check Status
 ```powershell
 git status
@@ -93,6 +101,14 @@ git remote show origin
 *   **Meaning:** Windows uses different line-endings (CRLF) than Linux/Mac (LF). Git is automatically converting them for compatibility.
 *   **Action:** Ignore it. It is normal.
 
+### Scenario: "I created a mess while syncing" (Abort Rebase)
+```powershell
+git rebase --abort
+```
+*   **Context:** You started a rebase/pull and hit too many conflicts.
+*   **Action:** COMPLETELY UNDOES the operation. Returns you to the state before you ran the command.
+*   **Analogy:** The "Eject" button.
+
 ## 6. Learning Roadmap (What Next?)
 
 ### A. Level 2: Isolation (Branching)
@@ -128,6 +144,54 @@ There are two ways to get updates from GitHub (Remote) to your Computer (Local).
 *   **Action:** Runs `git fetch` AND then immediately `git merge`.
 *   **Result:** Updates your files with the new code.
 *   **Risk:** Can cause conflicts if you have unsaved work.
+
+#### Two Ways `pull` Updates History
+1.  **Fast-Forward (Clean):**
+    *   **Scenario:** You have no local changes, you are just behind.
+    *   **Result:** Git simply slides your history forward. No new merge commit is created.
+2.  **Merge Commit (Mixed):**
+    *   **Scenario:** You gathered changes locally AND the server has new changes.
+    *   **Result:** Git combines them and creates a specific "Merge Commit" to join the two paths.
+
+    *   **Result:** Git combines them and creates a specific "Merge Commit" to join the two paths.
+
+### `git pull --rebase` (Pro Move)
+*   **Concept:** Rewrites history to make it look like a straight line.
+*   **Action:** Unplugs your local commits, updates "origin", then replugs your work on top.
+*   **Why:** Avoids "Merge branch 'main'" spaghetti history.
+*   **Rule:** Only use on commits you haven't pushed yet.
+### `git push -u origin main` (Setting Upstream)
+*   **Concept:** "Link my local branch to this remote branch forever."
+*   **Why:** So you can just type `git push` later without arguments.
+*   **Flags:** `-u` is short for `--set-upstream`.
+*   **When:** The VERY first time you push a new branch.
+
+### `git branch -vv` (Verbose Mode)
+*   **Concept:** "Tell me everything about my branches."
+*   **Output:** Shows branch name, current hash, commit message, and **upstream connection**.
+*   **Use Case:** "Am I ahead? Am I behind? Is my `main` actually connected to `origin/main`?"
+To check for changes on a GitHub repository without applying them to your local working directory:
+1.  **Update local database (Safe):**
+    ```powershell
+    git fetch origin
+    ```
+    *This downloads updates to your local `.git` folder but does **not** touch your working files.*
+2.  **See list of new commits:**
+    ```powershell
+    # Detailed list
+    git log HEAD..origin/main
+    # One-line summary
+    git log --oneline HEAD..origin/main
+    ```
+3.  **See actual code changes (Diff):**
+    ```powershell
+    git diff HEAD..origin/main
+    ```
+4.  **Check status:**
+    ```powershell
+    git status
+    ```
+
 
 ## 8. Understanding Git Pointers
 When you see `(HEAD -> main, origin/main, origin/HEAD)`, here is what it means:

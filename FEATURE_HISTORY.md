@@ -400,4 +400,34 @@ All features implemented, tested, and verified working. The Browser Homepage pro
 - ✅ Clean, modular codebase
 - ✅ Excellent user experience
 
-**Ready for daily use!** 🚀
+
+---
+
+## 8. Git Education & Repository Cleanup
+**Date:** 2025-12-18 | **Time:** 00:30
+
+### 📚 What Was Added
+A focus on "Learning by Doing". Implemented strict Git workflows and cleaned up technical debt.
+
+### ✨ Features
+- **Git Documentation**: Created a comprehensive field guide (`gitNotes.md`) covering:
+  - The "Golden Rule": Always branch before changes.
+  - `fetch` vs `pull` (Safe vs Action mode).
+  - Pointers (`HEAD` vs `origin`).
+  - Advanced commands (`rebase`, `abort`).
+- **Repository Hygiene**: 
+  - Removed legacy `backup_v1/` and `optional-features/` folders.
+  - Established `session_summary/` for organized logging.
+  - Moved `SESSION_SUMMARY.md` to the new dedicated folder.
+
+### 📁 Files Modified
+- **Updated**: `gitNotes.md` (Major expansion)
+- **Deleted**: `backup_v1/`, `optional-features/`, `style.css.bak`
+- **Moved**: `SESSION_SUMMARY.md` -> `session_summary/SESSION_SUMMARY.md`
+
+### ✅ Verified Working
+- Repository root is clean.
+- Documentation is precise and accessible.
+- New directory structure is in place.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-18.md)**
