@@ -14,6 +14,14 @@
     border: 1px solid var(--border-color);
     backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px var(--shadow-color);
+    transition: border-radius 0.1s;
+}
+
+#search-form.suggestions-open {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+    /* Optional: remove bottom border to merge better */
 }
 
 #search-input {
@@ -143,4 +151,55 @@ input:checked+.slider {
 
 input:checked+.slider:before {
     transform: translateX(24px);
+}
+
+/* Suggestions Dropdown */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: var(--widget-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0 0 12px 12px;
+    margin-top: 0;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px var(--shadow-color);
+    z-index: 1000;
+    overflow: hidden;
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-suggestions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.search-suggestions li {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.search-suggestions li i {
+    color: var(--text-secondary);
+    margin-right: 10px;
+    font-size: 0.9rem;
+}
+
+.search-suggestions li:hover,
+.search-suggestions li.active {
+    background-color: var(--hover-color);
+}
+
+.search-suggestions li:hover i,
+.search-suggestions li.active i {
+    color: var(--accent-color);
 }
