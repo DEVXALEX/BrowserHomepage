@@ -9,6 +9,9 @@
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/><polyline points='9 22 9 12 15 12 15 22'/></svg>">
 
+    <link rel="stylesheet" href="css/modules/toast.css">
+    <link rel="stylesheet" href="css/modules/syncBadge.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -501,6 +504,10 @@
         <button class="widget-btn" id="settings-toggle-btn" title="Settings & Data">
             <i class="fa-solid fa-cog"></i>
         </button>
+
+        <div id="main-sync-badge" title="Cloud Sync Status" class="sync-badge">
+            <i class="fa-solid fa-cloud"></i>
+        </div>
     </aside>
 
     <div id="settings-modal" class="modal-backdrop">
@@ -539,6 +546,12 @@
                 <button id="gh-setup-btn" class="form-btn-save"
                     style="width: 100%; background: #222; border: 1px solid #444; margin-bottom: 1rem;">
                     <i class="fa-solid fa-wrench"></i> Configure Cloud Sync
+                </button>
+
+                <!-- Unlock Session Button (Visible when encrypted but locked) -->
+                <button id="gh-unlock-session-btn" class="form-btn-save"
+                    style="width: 100%; background: #2ea44f; margin-bottom: 1rem; display: none;">
+                    <i class="fa-solid fa-lock-open"></i> Unlock Session
                 </button>
 
                 <!-- Configuration Area (Hidden by default) -->

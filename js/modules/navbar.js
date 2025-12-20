@@ -14,7 +14,17 @@
         // Map nav actions to existing sidebar buttons or functions
         switch (action) {
             case 'home':
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+                    window.location.href = 'index.html';
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                break;
+            case 'passwords':
+                // Check if we are already on the page
+                if (!window.location.pathname.includes('passwords.html')) {
+                    window.location.href = 'passwords.html';
+                }
                 break;
             case 'calendar':
                 toggleCalendar();
@@ -22,9 +32,16 @@
             case 'todo': // Fallthrough to notes
             case 'notes':
                 // Notes module now binds to this nav item directly
+                // If we are on passwords page, these might need to redirect Home first or open a global modal?
+                // For now, let's assume they work if the modules are loaded, or redirect home.
+                if (window.location.pathname.includes('passwords.html')) {
+                    window.location.href = 'index.html#notes'; // Simple fallback
+                }
                 break;
             case 'bookmarks':
-                // Bookmarks module now binds to this nav item directly
+                if (window.location.pathname.includes('passwords.html')) {
+                    window.location.href = 'index.html#bookmarks';
+                }
                 break;
             case 'bg':
                 clickIfExists('bg-toggle-btn');

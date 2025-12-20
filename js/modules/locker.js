@@ -70,20 +70,37 @@
             if (this.addBtn) this.addBtn.addEventListener('click', () => this.handleAddSecret());
         },
 
-        open: function () {
+        open: function (callback, autoPin = null) {
             if (!app.githubSync || !app.githubSync.token) {
-                alert('Please connect GitHub Sync first (or Unlock Session) to use the Secure Locker.');
+                if (app.githubSync && app.githubSync.encryptedToken && app.githubSync.showUnlockModal) {
+                    // Trigger Session Unlock with Callback for SSO
+                    app.githubSync.showUnlockModal((pin) => {
+                        // SSO: Try to unlock locker with same PIN provided
+                        this.open(callback, pin);
+                    });
+                } else {
+                    alert('Please connect GitHub Sync first (or Unlock Session) to use the Secure Locker.');
+                }
                 return;
             }
-            this.modal.classList.add('visible');
-            this.pinInput.value = '';
+            this.onUnlockCallback = callback; // Hook for external modules (Password Manager)
+
+            this.pinInput.value = autoPin || '';
             this.errorMsg.textContent = '';
-            this.showAuthView();
-            this.pinInput.focus();
+
+            if (autoPin) {
+                // Try silent unlock
+                this.handleUnlock(autoPin);
+            } else {
+                this.modal.classList.add('visible');
+                this.showAuthView();
+                this.pinInput.focus();
+            }
         },
 
         close: function () {
             this.modal.classList.remove('visible');
+            this.onUnlockCallback = null; // Clear callback
             // ZERO KNOWLEDGE WIPE
             masterKey = null;
             lockerData = null;
@@ -98,15 +115,28 @@
 
         showListView: function () {
             this.authView.style.display = 'none';
+
+            // If an external consumer requested access, give it to them and hide the modal
+            if (this.onUnlockCallback) {
+                this.modal.classList.remove('visible');
+                this.onUnlockCallback(lockerData);
+                return;
+            }
+
+            // Otherwise, show the default internal list view
             this.listView.style.display = 'flex';
             this.renderSecrets();
         },
 
-        handleUnlock: async function () {
+        handleUnlock: async function (validPin = null) {
             console.log("Locker: handleUnlock started");
-            const pin = this.pinInput.value;
+            const pin = validPin || this.pinInput.value;
             if (pin.length < 4) {
                 this.errorMsg.textContent = 'PIN must be at least 4 digits';
+                if (validPin) {
+                    this.modal.classList.add('visible');
+                    this.showAuthView();
+                }
                 return;
             }
 
@@ -115,48 +145,61 @@
 
             try {
                 console.log("Locker: Fetching file...");
-                // 1. Fetch Encrypted File
                 const encryptedFile = await this.fetchLockerFile();
 
-                if (!encryptedFile) {
-                    console.log("Locker: New Setup");
-                    // New Locker = New Salt
+                // CRITICAL: Always prioritize Salt from Cloud File if it exists
+                if (encryptedFile) {
+                    console.log("Locker: Existing Cloud File Found");
+                    const { salt, iv, data } = encryptedFile;
+
+                    // Salt is stored as Hex String in file -> Convert to Buffer
+                    const saltBytes = app.Crypto.hexToBuf(salt);
+
+                    // Update Session Salt to match Cloud Truth
+                    window.appLockerCurrentSalt = saltBytes;
+
+                    masterKey = await app.Crypto.deriveKey(pin, saltBytes);
+
+                    try {
+                        lockerData = await app.Crypto.decryptWithKey({ iv, data }, masterKey);
+                    } catch (e) {
+                        console.error("Locker: Decryption Failed", e);
+                        // Decryption failed = Wrong PIN (since salt is correct)
+                        throw new Error("Incorrect PIN");
+                    }
+
+                    // Decryption Success - Now update UI
+                    // If this fails, it's a bug, not a wrong PIN
+                    this.showListView();
+                } else {
+                    console.log("Locker: No Cloud File - New Setup");
+
+                    // Only generate new salt if one doesn't exist in session specific for locker
+                    // Actually, if it's a new setup, we MUST generate a new salt.
                     const salt = window.crypto.getRandomValues(new Uint8Array(16));
                     window.appLockerCurrentSalt = salt;
 
-                    console.log("Locker: Deriving Key (New)");
                     masterKey = await app.Crypto.deriveKey(pin, salt);
-                    console.log("Locker: Key Derived");
-                    lockerData = { secrets: [] }; // Empty
-
+                    lockerData = { secrets: [] };
                     this.showListView();
-                } else {
-                    console.log("Locker: Existing Setup");
-                    const { salt, iv, data } = encryptedFile;
-
-                    // Re-derive key (Salt is Hex String in file, need Buf for deriving)
-                    const saltBytes = app.Crypto.hexToBuf(salt);
-                    window.appLockerCurrentSalt = saltBytes;
-
-                    console.log("Locker: Deriving Key (Existing)");
-                    masterKey = await app.Crypto.deriveKey(pin, saltBytes);
-
-                    // Decrypt (Pass the object with Hex strings directly)
-                    try {
-                        console.log("Locker: Decrypting...");
-                        // app.Crypto.decryptWithKey expects { iv: hex, data: hex }
-                        lockerData = await app.Crypto.decryptWithKey({ iv, data }, masterKey);
-                        this.showListView();
-                    } catch (e) {
-                        console.error("Locker: Decryption Failed", e);
-                        this.errorMsg.textContent = 'Incorrect PIN or Corrupted Data';
-                        masterKey = null;
-                        window.appLockerCurrentSalt = null;
-                    }
                 }
+
             } catch (e) {
                 console.error("Locker: Error", e);
-                this.errorMsg.textContent = 'Network Error: ' + e.message;
+                // Differentiate Network vs Crypto Error
+                if (e.message === "Incorrect PIN") {
+                    this.errorMsg.textContent = 'Incorrect PIN';
+                } else {
+                    this.errorMsg.textContent = 'Sync Error / Corrupted Data';
+                }
+
+                masterKey = null;
+
+                // Ensure modal is visible to retry
+                if (validPin) {
+                    this.modal.classList.add('visible');
+                    this.showAuthView();
+                }
             } finally {
                 this.unlockBtn.textContent = 'Unlock';
             }
