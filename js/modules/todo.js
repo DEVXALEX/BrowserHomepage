@@ -66,21 +66,8 @@
             renderTodos();
         }
 
-        function showTodoModal() {
-            renderTodos();
-            todoModal.classList.add('visible');
-        }
-
-        function hideTodoModal() {
-            todoModal.classList.remove('visible');
-        }
-
-        todoToggleBtn.addEventListener('click', showTodoModal);
-        closeTodoModal.addEventListener('click', hideTodoModal);
-
-        todoModal.addEventListener('click', (e) => {
-            if (e.target === todoModal) hideTodoModal();
-        });
+        // Modal logic removed - now integrated into Notes Modal
+        // The renderTodos() is sufficient.
 
         todoForm.addEventListener('submit', (e) => {
             e.preventDefault();

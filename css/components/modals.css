@@ -26,8 +26,9 @@
     padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    width: 90%;
-    max-width: 400px;
+    width: 95%;
+    max-width: 700px;
+    /* Increased from 400px for horizontal look */
 }
 
 .modal-form h3 {

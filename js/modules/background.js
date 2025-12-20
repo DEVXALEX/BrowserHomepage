@@ -166,7 +166,8 @@
     function startTimeBasedChecker() {
         if (timeBasedInterval) clearInterval(timeBasedInterval);
         timeBasedInterval = setInterval(() => {
-            if (currentSettings.timeBasedEnabled) {
+            // Only auto-change if enabled AND we are in auto mode
+            if (currentSettings.timeBasedEnabled && currentSettings.mode === 'auto') {
                 applyTimeBasedBackground();
             }
         }, 3600000);
@@ -306,7 +307,15 @@
         `).join('');
 
         favGrid.querySelectorAll('.favorite-item img').forEach((img, idx) => {
-            img.addEventListener('click', () => applyBackground(favorites[idx].url));
+            img.addEventListener('click', () => {
+                applyBackground(favorites[idx].url);
+                // Fix for Item 12: Ensure mode is switched so it doesn't get overridden or confused
+                currentSettings.mode = 'custom';
+                // Update UI tabs to reflect this
+                const customTabBtn = document.querySelector('.bg-tab[data-tab="custom"]');
+                if (customTabBtn) customTabBtn.click(); // Trigger tab switch UI
+                saveSettings();
+            });
         });
 
         favGrid.querySelectorAll('.remove-favorite').forEach(btn => {

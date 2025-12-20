@@ -87,6 +87,20 @@ git push
 *   **Why:** Sends your commits to the server.
 *   **Note:** The VERY first time, use `git push -u origin main`.
 
+### Create New Remote Branch
+```powershell
+git push -u origin <branch-name>
+```
+*   **When:** You created a branch locally (`git checkout -b`) and want it on GitHub.
+*   **Action:** Uploads your branch logic to GitHub AND links them together.
+
+#### Q: What if I don't use `-u`?
+*   **Result:** The branch is created on GitHub successfully.
+*   **The Annoyance:** Your local git won't know they are connected. Next time you type `git pull`, it will scream: *"There is no tracking information for the current branch."*
+*   **The Fix:** You'd have to run `git branch --set-upstream-to=origin/branch-name`. Just use `-u` at the start to avoid this pain.
+
+
+
 
 ### Finish Work (Merging)
 *   **Context:** You are happy with your feature and want to bring it into the main app.
@@ -102,6 +116,12 @@ git push
     ```powershell
     git branch -d feature-name
     ```
+
+### Q: What if I don't delete the branch?
+*   **Technically:** Nothing breaks. The code stays there forever.
+*   **The Problem:** Your generic "messy desk". If you have 50 old branches, finding the *active* one is hard.
+*   **The Risk:** You might accidentally checkout `feature-login` from 3 months ago, write new code, and realize you are working on an outdated version of the app.
+*   **Best Practice:** Keep your branch list clean. Only keep what you are *currently* working on.
 
 ## 5. Troubleshooting & Scenarios
 

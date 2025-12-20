@@ -5,13 +5,19 @@
 .bookmarks-container {
     background: #2a2a2a;
     width: 90%;
-    max-width: 600px;
+    max-width: 800px;
+    min-height: 500px;
+    /* Squarer */
     max-height: 80vh;
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
 }
+
+/* ... skipped header ... */
+/* Removed duplicate form styles */
+
 
 .bookmarks-header {
     display: flex;
@@ -127,29 +133,43 @@
 
 .bookmarks-form {
     display: flex;
-    gap: 0.5rem;
-    padding: 1rem 1.5rem;
+    gap: 1rem;
+    padding: 1.5rem;
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
+    align-items: center;
+    /* Ensure form doesn't overflow horizontally */
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .bookmarks-form input[type="text"] {
-    flex-grow: 1;
-    padding: 0.75rem;
+    flex: 1;
+    padding: 0.8rem 1rem;
     border: 1px solid var(--border-color);
     background: var(--bg-color);
     color: var(--text-color);
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    /* Prevent input from forcing width */
+    min-width: 0;
 }
 
 .bookmarks-form .form-btn-save {
-    padding: 0.75rem 1.25rem;
+    padding: 0 1.5rem;
+    /* Horizontal padding only, height matched via flex */
+    height: 3rem;
+    /* Fixed height matching inputs typically ~45-50px */
     border: none;
     border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     background: var(--accent-color);
     color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
 }

@@ -30,15 +30,11 @@
         </div>
         <ul class="nav-links">
             <li data-action="home">Home</li>
-            <li data-action="calendar">Calendar</li> <!-- Added -->
-            <li data-action="todo">Tasks</li>
-            <li data-action="notes">Notes</li>
-            <li data-action="bg">Gallery</li>
-            <li data-action="ambient">Sounds</li>
+            <li data-action="notes">Notes & Tasks</li>
+            <li data-action="calendar">Calendar</li>
             <li data-action="bookmarks">Bookmarks</li>
             <li data-action="passwords"><i class="fa-solid fa-lock"
                     style="font-size: 0.8rem; margin-right: 5px;"></i>Passwords</li>
-            <li data-action="settings">Settings</li>
         </ul>
         <div class="nav-extra">
             <!-- Space for future additions -->
@@ -148,46 +144,59 @@
 
     <div id="notes-modal" class="modal-backdrop">
         <div class="notes-app-container">
-            <div class="notes-sidebar">
-                <button class="notes-btn-new" id="notes-add-btn">
-                    <i class="fa-solid fa-plus"></i> New Note
-                </button>
-                <ul id="notes-list"></ul>
-            </div>
-            <div class="notes-editor">
+            <!-- Header with Tabs -->
+            <div class="notes-header-tabs"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div class="prod-tabs">
+                    <button class="prod-tab active" data-tab="notes">Notes</button>
+                    <button class="prod-tab" data-tab="todo">Tasks</button>
+                </div>
                 <button class="close-btn" id="notes-close-btn">×</button>
-                <div id="note-editor-container" class="hidden">
-                    <input type="text" id="note-title-input" placeholder="Note Title">
-                    <textarea id="note-content-textarea" placeholder="Start writing..."></textarea>
-                    <div class="notes-editor-actions">
-                        <button class="notes-btn-save" id="note-save-btn"><i class="fa-solid fa-save"></i> Save</button>
-                        <button class="notes-btn-discard" id="note-discard-btn"><i class="fa-solid fa-times"></i>
-                            Discard</button>
-                        <button class="notes-btn-delete" id="note-delete-btn"><i class="fa-solid fa-trash"></i>
-                            Delete</button>
+            </div>
+
+            <!-- Notes Tab Content -->
+            <div id="tab-content-notes" class="prod-tab-content active"
+                style="flex: 1; display: flex; overflow: hidden;">
+                <div class="notes-sidebar">
+                    <button class="notes-btn-new" id="notes-add-btn">
+                        <i class="fa-solid fa-plus"></i> New Note
+                    </button>
+                    <ul id="notes-list"></ul>
+                </div>
+                <div class="notes-editor">
+                    <div id="note-editor-container" class="hidden">
+                        <input type="text" id="note-title-input" placeholder="Note Title">
+                        <textarea id="note-content-textarea" placeholder="Start writing..."></textarea>
+                        <div class="notes-editor-actions">
+                            <button class="notes-btn-save" id="note-save-btn"><i class="fa-solid fa-save"></i>
+                                Save</button>
+                            <button class="notes-btn-discard" id="note-discard-btn"><i class="fa-solid fa-times"></i>
+                                Discard</button>
+                            <button class="notes-btn-delete" id="note-delete-btn"><i class="fa-solid fa-trash"></i>
+                                Delete</button>
+                        </div>
+                    </div>
+                    <div id="note-editor-placeholder">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        <p>Select a note from the list, or create a new one.</p>
                     </div>
                 </div>
-                <div id="note-editor-placeholder">
-                    <i class="fa-solid fa-note-sticky"></i>
-                    <p>Select a note from the list, or create a new one.</p>
+            </div>
+
+            <!-- Todo Tab Content -->
+            <div id="tab-content-todo" class="prod-tab-content"
+                style="flex: 1; display: none; flex-direction: column; padding: 1rem;">
+                <div class="todo-container"
+                    style="box-shadow: none; border: none; background: transparent; width: 100%; height: 100%;">
+                    <div class="todo-content" style="flex: 1; overflow-y: auto;">
+                        <ul id="todo-list"></ul>
+                    </div>
+                    <form class="todo-form" id="todo-form" style="margin-top: 1rem;">
+                        <input type="text" id="todo-input" placeholder="New task..." required autocomplete="off">
+                        <button type="submit" class="form-btn-save"><i class="fa-solid fa-plus"></i> Add</button>
+                    </form>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="todo-modal" class="modal-backdrop">
-        <div class="todo-container">
-            <div class="todo-header">
-                <h3><i class="fa-solid fa-list-check"></i> To-Do List</h3>
-                <button id="close-todo-modal" class="close-btn">×</button>
-            </div>
-            <div class="todo-content">
-                <ul id="todo-list"></ul>
-            </div>
-            <form class="todo-form" id="todo-form">
-                <input type="text" id="todo-input" placeholder="New task..." required autocomplete="off">
-                <button type="submit" class="form-btn-save"><i class="fa-solid fa-plus"></i> Add</button>
-            </form>
         </div>
     </div>
 
@@ -432,9 +441,10 @@
     <div id="main-content">
         <main>
             <header>
-                <div id="date-display"></div>
-
-                <div id="time"></div>
+                <div class="datetime-container">
+                    <div id="date-display"></div>
+                    <div id="time"></div>
+                </div>
                 <p id="quote"></p>
             </header>
 
@@ -470,15 +480,7 @@
     </button>
 
     <aside id="widget-sidebar">
-        <button class="widget-btn" id="todo-toggle-btn" title="To-Do List">
-            <i class="fa-solid fa-list-check"></i>
-        </button>
-        <button class="widget-btn" id="notes-toggle-btn" title="Notes">
-            <i class="fa-solid fa-note-sticky"></i>
-        </button>
-        <button class="widget-btn" id="bookmarks-toggle" title="Temporary Bookmarks">
-            <i class="fa-solid fa-bookmark"></i>
-        </button>
+        <!-- Notes and Bookmarks moved to Navbar -->
 
         <button class="widget-btn" id="ambient-toggle-btn" title="Ambient Sounds">
             <i class="fa-solid fa-headphones"></i>
@@ -557,9 +559,11 @@
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
                     <!-- Sync Now button moved outside config area so it's accessible after connection -->
                     <button id="gh-manual-sync-btn" class="form-btn-save"
-                        style="flex: 1; background: #1f6feb; display: none;" disabled>Sync Now</button>
+                        style="flex: 1; background: #1f6feb; display: none;" disabled><i class="fa-solid fa-rotate"></i>
+                        Sync</button>
                     <button id="gh-restore-btn" class="form-btn-save"
-                        style="flex: 1; background: #d29922; display: none;" disabled>Restore </button>
+                        style="flex: 1; background: #d29922; display: none;" disabled><i
+                            class="fa-solid fa-cloud-arrow-down"></i> Restore</button>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">

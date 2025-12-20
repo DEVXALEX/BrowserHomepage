@@ -3,7 +3,10 @@
         let notes = [];
         let activeNoteId = null;
 
+        // Bind to Sidebar button AND Navbar item
         const notesToggleBtn = document.getElementById('notes-toggle-btn');
+        const navNotesBtn = document.querySelector('li[data-action="notes"]');
+        const navTodoBtn = document.querySelector('li[data-action="todo"]');
         const notesModal = document.getElementById('notes-modal');
         const notesList = document.getElementById('notes-list');
         const notesAddBtn = document.getElementById('notes-add-btn');
@@ -114,7 +117,20 @@
             notesModal.classList.remove('visible');
         }
 
-        notesToggleBtn.addEventListener('click', showNotesModal);
+        if (notesToggleBtn) notesToggleBtn.addEventListener('click', showNotesModal);
+
+        // Navbar Listeners
+        if (navNotesBtn) navNotesBtn.addEventListener('click', () => {
+            showNotesModal();
+            const tab = document.querySelector('.tab-btn[data-tab="notes"]');
+            if (tab) tab.click();
+        });
+
+        if (navTodoBtn) navTodoBtn.addEventListener('click', () => {
+            showNotesModal();
+            const tab = document.querySelector('.tab-btn[data-tab="tasks"]');
+            if (tab) tab.click();
+        });
         notesCloseBtn.addEventListener('click', hideNotesModal);
 
         notesModal.addEventListener('click', (e) => {
@@ -145,5 +161,27 @@
         });
 
         loadNotes();
+
+        // Tab Handling Logic
+        const tabs = document.querySelectorAll('.prod-tab');
+        const tabContents = document.querySelectorAll('.prod-tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => {
+                    c.style.display = 'none';
+                    c.classList.remove('active');
+                });
+
+                tab.classList.add('active');
+                const targetId = `tab-content-${tab.dataset.tab}`;
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) {
+                    targetContent.style.display = (tab.dataset.tab === 'notes') ? 'flex' : 'flex';
+                    targetContent.classList.add('active');
+                }
+            });
+        });
     };
 })(window.Homepage = window.Homepage || {});
