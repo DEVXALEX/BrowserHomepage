@@ -297,3 +297,92 @@ When you see `(HEAD -> main, origin/main, origin/HEAD)`, here is what it means:
 
 ### `origin/HEAD`
 *   The default branch on GitHub (usually `main`).
+
+## 9. Advanced Concepts: The "Diamond" Merge
+**Scenario:**
+1.  You made a commit locally (e.g., `docs`).
+2.  Simultaneously, a Pull Request was merged on GitHub (e.g., `mass changes`).
+3.  **Result:** Your history "Diverged". Two different features grew from the same stem.
+
+**The Fix (git pull):**
+When you ran `git pull`, Git did the following:
+1.  **Fetched** the remote changes.
+2.  **Detected** that your local branch and the remote branch had split.
+3.  **Created a "Merge Commit"**: This is a special commit that has **two parents**. It ties the two separate paths back together.
+
+**Visualizing it (The Diamond Shape):**
+```
+      A --- B  (Local Work)
+     /       \
+... D         M  (Merge Commit)
+     \       /
+      X --- Y  (Remote Work)
+```
+*   **D**: The shared, common history.
+*   **A, B**: Your local work.
+*   **X, Y**: The work done on GitHub.
+*   **M**: The "Merge Commit" that brings them all together.
+
+## 10. The "Git Pull" Logic Flow
+**User Rule:** "If I have changes and GitHub has changes, `git pull` combines them."
+
+**Is this correct?**
+**YES.** Git attempts to do this automatically.
+
+**The Process:**
+1.  **Download:** Git fetches the remote commits.
+2.  **Compare:** Git looks at your files vs. their files.
+3.  **Combine:**
+    *   **Scenario A (Clean):** They changed `header.js`, you changed `footer.js`. **Git auto-merges** and creates the new commit for you.
+    *   **Scenario B (Conflict):** You BOTH changed line 10 of `header.js`. **Git stops** and asks you to choose. ("Merge Conflict").
+
+## 11. The Panic Room (Mistake Management)
+**Scenario:** "I just made a commit, but I didn't mean to!"
+
+### Option A: The "Undo" Button (Soft Reset)
+*   **Goal:** Undo the commit, but **KEEP** your file changes (so you can fix them).
+*   **Command:** `git reset --soft HEAD~1`
+*   **Translation:** "Go back 1 step in history, but leave my files as they are."
+
+### Option B: The "Nuke" Button (Hard Reset)
+*   **Goal:** Destroy the commit AND destroy the file changes.
+*   **Command:** `git reset --hard HEAD~1`
+*   **Translation:** "Go back 1 step and make it look like that work never happened."
+
+### Option C: The "Public" Fix (Revert)
+*   **Goal:** You already **pushed** the mistake to GitHub.
+*   **Command:** `git revert <commit-hash>`
+*   **Translation:** "Make a NEW commit that does the exact opposite of the bad commit."
+*   **Why:** You never rewrite history that others might have downloaded.
+
+## 12. Spring Cleaning (Deleting Branches)
+**Question:** "Is it safe to delete this branch?"
+
+### Step 1: The Safety Check
+```powershell
+git branch --merged
+```
+*   **Result:** Lists all branches that have been successfully combined into your current branch.
+*   **Verdict:** If your branch name (e.g., `feature-login`) appears in this list, it is **100% SAFE** to delete.
+
+### Step 2: Delete Locally
+```powershell
+git branch -d branch-name
+```
+*   **Note:** Use lowercase `-d`. Git will protect you. It acts like a "Are you sure?" dialog.
+*   **Force Delete:** If you try to delete an unmerged branch, Git will scream. To force it (if you truly want to trash the work), use `-D`.
+
+### Step 3: Delete from GitHub (Remote)
+```powershell
+git push origin --delete branch-name
+```
+*   **Why:** Just because you deleted it on your laptop doesn't mean it's gone from the cloud.
+
+### Troubleshooting: "Git says it's not merged!"
+*   **Error:** `error: the branch '...' is not fully merged`
+*   **Context:** This often happens after a "Diamond Merge". Git sees that your local feature branch has some "bookkeeping" history that isn't on the server, even though the **code** is safe in `main`.
+*   **The Check:** If the error says `merged to HEAD`, you are safe.
+*   **The Fix:** Use the Uppercase D (Force Delete):
+    ```powershell
+    git branch -D branch-name
+    ```

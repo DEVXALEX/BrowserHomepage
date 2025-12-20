@@ -4,6 +4,7 @@ trigger: always_on
 
 # 🛑 Start And End of Session Protocol
 **Trigger Phrase:** "Done for today", "That's all", "Wrap it up".
+Its not end of session untill I say to wrap up or something
 Also When I say start or lets beging understand that is starting point of session and all the details from that point should be tracked for feature history session history git notes 
 When the session ends, **ALWAYS** perform the following 3 actions before signing off:
 ## 1. Update Feature History

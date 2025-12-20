@@ -232,10 +232,13 @@ A fully functional calculator with keyboard support.
   - Backspace/delete
   - Clear (C) button
   
-- **Display**:
-  - Expression history
-  - Result display
-  - Auto-formatting (4 decimals, removes trailing zeros)
+- **[2.1]** Search Bar Refinement (2025-12-19)
+    - **Fixes:** Clears input on search, Auto-focus, 100ms Debounce.
+    - **Status:** Merged to `main` (PR #2).
+
+- **[2.2]** Repository Sync (2025-12-20)
+    - **Action:** Merged remote `mass changes` into local `docs`.
+    - **Status:** Synced.
 
 - **Keyboard Support**:
   - Numbers: `0-9`
