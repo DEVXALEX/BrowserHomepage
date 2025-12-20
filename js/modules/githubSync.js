@@ -36,6 +36,7 @@
                 // Case B: Legacy Plain Text
                 console.warn("Legacy Plain-Text Token detected.");
                 this.token = rawToken;
+                this.updateStatus("⚠️ Token Unsecured (Legacy)", "error");
                 this.finishInit();
             } else {
                 // Case C: No Token

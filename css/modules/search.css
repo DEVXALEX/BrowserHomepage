@@ -168,7 +168,8 @@ input:checked+.slider:before {
     z-index: 1000;
     overflow: hidden;
     display: none;
-    max-height: 300px;
+    max-height: 500px;
+    /* Increased from 300px */
     overflow-y: auto;
 }
 

@@ -92,10 +92,15 @@
 
         // Initialize
         if (timeElement) {
+            // Remove full-element click listener (User request 8.1)
+            // Instead, we will append a small toggle button if it doesn't exist
+
             timeElement.addEventListener('click', toggleMode);
             timeElement.title = "Click to switch clock mode";
-        }
+            timeElement.style.width = "fit-content"; // Ensure click area is tight
+            timeElement.style.margin = "0 auto"; // Center it
 
+        }
         updateTime();
         setInterval(updateTime, 1000);
     };

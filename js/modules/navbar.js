@@ -19,20 +19,15 @@
             case 'calendar':
                 toggleCalendar();
                 break;
-            case 'todo':
-                clickIfExists('todo-toggle-btn');
-                break;
+            case 'todo': // Fallthrough to notes
             case 'notes':
-                clickIfExists('notes-toggle-btn');
+                // Notes module now binds to this nav item directly
+                break;
+            case 'bookmarks':
+                // Bookmarks module now binds to this nav item directly
                 break;
             case 'bg':
                 clickIfExists('bg-toggle-btn');
-                break;
-            case 'ambient':
-                clickIfExists('ambient-toggle-btn');
-                break;
-            case 'settings':
-                clickIfExists('settings-toggle-btn');
                 break;
             default:
                 console.log('Unknown action:', action);

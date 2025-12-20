@@ -54,8 +54,18 @@
             bookmarksModal.classList.remove('visible');
         }
 
-        bookmarksToggle.addEventListener('click', showBookmarksModal);
-        closeBookmarksModal.addEventListener('click', hideBookmarksModal);
+        // Navbar Listener
+        const navBookmarks = document.querySelector('li[data-action="bookmarks"]');
+        if (navBookmarks) {
+            navBookmarks.addEventListener('click', showBookmarksModal);
+        }
+
+        if (bookmarksToggle) {
+            bookmarksToggle.addEventListener('click', showBookmarksModal);
+        }
+        if (closeBookmarksModal) {
+            closeBookmarksModal.addEventListener('click', hideBookmarksModal);
+        }
 
         bookmarksModal.addEventListener('click', (e) => {
             if (e.target === bookmarksModal) hideBookmarksModal();

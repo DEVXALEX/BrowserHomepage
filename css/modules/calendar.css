@@ -163,8 +163,12 @@
     gap: 0.5rem;
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 0;
+    overflow-y: auto;
+    padding-right: 5px;
     overflow-x: hidden;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 10px;
 }
 
 .calendar-grid::-webkit-scrollbar {
@@ -201,17 +205,21 @@
 }
 
 .day.today {
-    border: 1px solid var(--accent-color);
+    border: 2px solid var(--accent-color);
     color: var(--accent-color);
-    font-weight: bold;
+    font-weight: 800;
+    box-shadow: 0 0 10px var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.1);
 }
 
 .day.selected {
-    background: rgba(77, 148, 255, 0.2);
+    background: var(--save-color);
     border: 1px solid var(--save-color);
     color: white;
     font-weight: bold;
-    box-shadow: 0 0 15px rgba(77, 148, 255, 0.3);
+    box-shadow: 0 0 15px rgba(46, 164, 79, 0.4);
+    transform: scale(1.05);
+    z-index: 2;
 }
 
 .day.has-notes::after {

@@ -49,10 +49,7 @@
     transform: scale(1.4);
 }
 
-.widget-btn.active {
-    background-color: var(--accent-color);
-    color: #111;
-}
+/* Active state removed per user request */
 
 /* Sidebar Icon Colors */
 #todo-toggle-btn i {
