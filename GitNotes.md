@@ -103,6 +103,12 @@ git push
     git branch -d feature-name
     ```
 
+### Q: What if I don't delete the branch?
+*   **Technically:** Nothing breaks. The code stays there forever.
+*   **The Problem:** Your generic "messy desk". If you have 50 old branches, finding the *active* one is hard.
+*   **The Risk:** You might accidentally checkout `feature-login` from 3 months ago, write new code, and realize you are working on an outdated version of the app.
+*   **Best Practice:** Keep your branch list clean. Only keep what you are *currently* working on.
+
 ## 5. Troubleshooting & Scenarios
 
 
