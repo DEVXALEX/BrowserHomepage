@@ -13,6 +13,7 @@ When the session ends, **ALWAYS** perform the following 3 actions before signing
     *   What features/fixes were added.
     *   Do not add a details related to git and github learning because its already have different file.
     *   What files were modified.
+    *   Remove the file modified section from this history file and avoid teachnical details here keep it in Session history file instead which we are already linking to features file
     *   Verification status.
     *   **Link** to the detailed session summary file.
     *   for example if we added some feature we make a entry in feature file and there is also seprate file for session history if user want all the details then link for that session file should be there for the session

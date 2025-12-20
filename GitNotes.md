@@ -16,6 +16,12 @@ git --version
 ```
 *   **Why:** verify Git is installed.
 
+### Check Configuration
+```powershell
+git config list
+```
+*   **Why:** Shows all your Git settings (user name, email, credentials, etc.).
+
 ### Initialize Repository
 ```powershell
 git init
@@ -143,6 +149,33 @@ How real teams work.
 *   **Goal:** Instead of merging yourself, you ask GitHub to merge it for you (allowing for code review).
 *   **Concept:** "Pull Request" (PR) flow on GitHub.com.
 
+#### How to Create a Pull Request (PR):
+1.  **Push your branch:**
+    ```powershell
+    git push -u origin feature-name
+    ```
+2.  **Go to GitHub:** Open your repository in the browser.
+3.  **Click Banner:** You will usually see a yellow banner: "bug/searchbar had recent pushes... Compare & pull request". Click it.
+    *   *Alternative:* Go to "Pull requests" tab > "New pull request" > Select your branch.
+4.  **Fill Details:** Write a title and description of your changes.
+5.  **Create:** Click "Create pull request".
+
+#### After Merging (Back to Local):
+Now that GitHub has the new code on `main`, your computer is behind!
+1.  **Switch to Main:**
+    ```powershell
+    git checkout main
+    ```
+2.  **Download Updates:**
+    ```powershell
+    git pull origin main
+    ```
+3.  **Delete Old Branch:**
+    ```powershell
+    git branch -d feature-name
+    ```
+    *(If it complains, use `-D` to force it).*
+
 ### D. Level 5: Disaster Management (Conflicts)
 What happens when two people check the same line of code?
 *   **Goal:** Learn to manually resolve conflicts without panicking.
@@ -172,11 +205,22 @@ There are two ways to get updates from GitHub (Remote) to your Computer (Local).
 
     *   **Result:** Git combines them and creates a specific "Merge Commit" to join the two paths.
 
+    *   **Result:** Git combines them and creates a specific "Merge Commit" to join the two paths.
+
 ### `git pull --rebase` (Pro Move)
 *   **Concept:** Rewrites history to make it look like a straight line.
 *   **Action:** Unplugs your local commits, updates "origin", then replugs your work on top.
 *   **Why:** Avoids "Merge branch 'main'" spaghetti history.
 *   **Rule:** Only use on commits you haven't pushed yet.
+
+### Strategy: When to specific Merge vs. Rebase?
+| Feature | Merge (`git pull`) | Rebase (`git pull --rebase`) |
+| :--- | :--- | :--- |
+| **History** | Creates a loop (Diamond shape). Honest chronology. | Straight line. Rewrites history. |
+| **Safety** | 100% Safe. | Risky on **shared** branches. |
+| **Use Case** | **Merging a Feature:** When "Finishing" a big task and bringing it to main. | **Syncing Daily Work:** When you just want to catch up with the team. |
+| **Decision** | "I want to preserve the fact that this feature was developed separately." | "I just want my latest commit to be on top of the latest code." |
+
 ### `git push -u origin main` (Setting Upstream)
 *   **Concept:** "Link my local branch to this remote branch forever."
 *   **Why:** So you can just type `git push` later without arguments.
