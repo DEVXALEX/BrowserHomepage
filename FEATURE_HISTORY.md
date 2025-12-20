@@ -490,5 +490,37 @@ Fixed the broken search bar behavior and supercharged it with instant suggestion
 - Suggestion box sits perfectly below input with zero gap.
 - Arrow keys and Enter key work for navigation.
 
-> **[View Detailed Session Summary](session_summary/session_2025-12-19.md)**
 
+---
+
+## 11. Mass UI/UX Cleanup & Modal Redesign
+**Date:** 2025-12-20 | **Time:** 14:00
+
+### 🎨 What Was Added
+A comprehensive interface cleanup focusing on simplifying navigation and improving modal usability.
+
+### ✨ Features
+- **Navbar/Sidebar Split**: Enforced strict exclusivity. "Notes", "Benchmarks", "Calendar" moved to Navbar; "Settings", "Ambient" stay in Sidebar.
+- **Modal Redesign (Grid Layout)**: 
+  - **Background Settings**: Converted to a wide 900px 2-column grid layout.
+  - **Result**: Eliminates vertical scrolling. Custom/Time settings on Left, Adjustments/Filters on Right.
+  - **Favorites Strip**: Converted vertical list to a horizontal scroll strip.
+- **Clock Alignment**: Fixed alignment issues by grouping date/time in a flex container.
+- **Security Feedback**: Added visual warnings for unsecured GitHub tokens.
+
+### 📁 Files Modified
+- **CSS**: `background.css` (Grid), `bookmarks.css` (Width), `base.css` (Clock)
+- **JS**: `background.js` (Auto-change logic fix), `bookmarks.js` (Event fix)
+- **HTML**: `index.html` (Structure updates)
+
+### 🐛 Bugs Fixed
+- **Favorited Backgrounds Changing**: Fixed issue where time-based auto-changer overwrote favorites. Now strictly checks for 'auto' mode.
+- **Bookmarks Toggle Error**: Fixed null reference error when button was missing.
+- **Clock Toggle**: Removed confusing toggle button; verify directly on click.
+
+### ✅ Verified Working
+- Modals open with wider, scroll-free layout.
+- Favorites persist correctly without being overwritten.
+- Navbar buttons trigger correct modals.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
