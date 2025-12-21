@@ -161,6 +161,11 @@
             this.lockerDataRef = data;
             this.secrets = data.secrets || [];
             this.renderList();
+
+            // Auto-focus search input for immediate typing
+            setTimeout(() => {
+                if (this.searchInput) this.searchInput.focus();
+            }, 50);
         },
 
         lockVault: function () {
