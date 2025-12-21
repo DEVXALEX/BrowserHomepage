@@ -70,7 +70,8 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nav-links li:hover::after {
+.nav-links li:hover::after,
+.nav-links li.active::after {
     transform: scaleX(1);
 }
 

@@ -18,6 +18,10 @@
             this.countBadge = document.getElementById('pm-count-badge');
             this.listContainer = document.getElementById('pm-list-container');
 
+            // Inline Unlock Elements
+            this.inlinePinInput = document.getElementById('pm-inline-pin');
+            this.inlineUnlockBtn = document.getElementById('pm-inline-unlock-btn');
+
             // Sidebar
             this.searchInput = document.getElementById('pm-search-input');
             this.filterBtns = document.querySelectorAll('.pm-filter-btn');
@@ -46,12 +50,20 @@
                     console.log("PasswordManager: Unlock Button Clicked");
                     this.triggerUnlock();
                 });
-            } else {
-                console.error("PasswordManager: Unlock button not found in DOM");
             }
             // Lock
             if (this.lockBtn) {
                 this.lockBtn.addEventListener('click', () => this.lockVault());
+            }
+
+            // Inline Unlock Events
+            if (this.inlineUnlockBtn) {
+                this.inlineUnlockBtn.addEventListener('click', () => this.handleInlineUnlock());
+            }
+            if (this.inlinePinInput) {
+                this.inlinePinInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleInlineUnlock();
+                });
             }
 
             // Search
@@ -91,25 +103,61 @@
         },
 
         checkState: function () {
-            // Check if we are already unlocked (transient) ?? 
-            // Actually locker.js keeps state. But we don't know it unless we try to open or hack it.
-            // Best pattern: Start locked. User must click Unlock.
-            // Unless? No, explicit unlock is safer.
+            // Start in locked state by default
+            this.renderList();
         },
 
         triggerUnlock: function () {
-            console.log("PasswordManager: triggerUnlock called");
-            if (!app.Locker) {
-                console.error("PasswordManager: app.Locker is missing!");
-                alert("Internal Error: Locker module not loaded.");
+            // Fallback to Modal if needed, but we prefer inline now.
+            // If the old button exists (e.g. from some other view), we support it.
+            if (app.Locker) {
+                app.Locker.open(this.onUnlockSuccess.bind(this));
+            }
+        },
+
+        handleInlineUnlock: async function () {
+            const pin = this.inlinePinInput ? this.inlinePinInput.value : '';
+            const errorEl = document.getElementById('pm-inline-error');
+
+            if (!pin) {
+                if (errorEl) errorEl.textContent = "Please enter PIN";
                 return;
             }
-            // Use the new Open(callback) signature
-            app.Locker.open(this.onUnlockSuccess.bind(this));
+
+            if (this.inlineUnlockBtn) this.inlineUnlockBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+            if (errorEl) errorEl.textContent = "";
+
+            // 1. Ensure Session is Unlocked (Decrypt GitHub Token)
+            if (app.githubSync && !app.githubSync.token && app.githubSync.encryptedToken) {
+                console.log("PM: Attempting to unlock session...");
+                const sessionUnlocked = await app.githubSync.tryUnlock(pin);
+                if (!sessionUnlocked) {
+                    if (errorEl) errorEl.textContent = "Incorrect PIN (Session Unlock)";
+                    if (this.inlineUnlockBtn) this.inlineUnlockBtn.textContent = "Unlock";
+                    return;
+                }
+                console.log("PM: Session Unlocked. Proceeding to Locker.");
+            }
+
+            // 2. Register Callback so Locker knows where to send data
+            if (app.Locker) app.Locker.onUnlockCallback = this.onUnlockSuccess.bind(this);
+
+            // 3. Attempt unlock Vault
+            const success = await app.Locker.handleUnlock(pin);
+
+            if (!success) {
+                if (errorEl) errorEl.textContent = app.Locker.unlockError ? app.Locker.unlockError.textContent : "Incorrect PIN";
+                if (this.inlineUnlockBtn) this.inlineUnlockBtn.textContent = "Unlock";
+                if (this.inlinePinInput) {
+                    this.inlinePinInput.value = '';
+                    this.inlinePinInput.focus();
+                }
+            }
+            // If success, Locker calls finishUnlock -> renderList(secrets)
         },
 
         onUnlockSuccess: function (data) {
-            console.log("PasswordManager: Unlocked!", data);
+            console.log("PM: onUnlockSuccess called with:", data);
             this.lockerDataRef = data;
             this.secrets = data.secrets || [];
             this.renderList();
@@ -118,28 +166,58 @@
         lockVault: function () {
             this.secrets = [];
             this.lockerDataRef = null;
-            if (app.Locker) app.Locker.close(); // Wipes memory in locker.js
-
-            // Restore Locked UI
-            this.listContainer.innerHTML = `
-                <div class="pm-locked-state">
-                    <i class="fa-solid fa-shield-cat"></i>
-                    <h3>Vault is Locked</h3>
-                    <p>Enter your Master PIN to view your passwords.</p>
-                    <button id="pm-unlock-btn" class="form-btn-save">Unlock Vault</button>
-                </div>
-            `;
-            // Re-bind unlock button since we destroyed it
-            this.unlockBtn = document.getElementById('pm-unlock-btn');
-            if (this.unlockBtn) {
-                this.unlockBtn.addEventListener('click', () => this.triggerUnlock());
-            }
-
-            if (this.countBadge) this.countBadge.textContent = "0 items";
+            if (app.Locker) app.Locker.close();
+            this.renderLockedState();
+            if (this.viewTitle) this.viewTitle.textContent = 'All Items';
         },
 
-        renderList: function () {
-            if (!this.lockerDataRef) return; // Still locked
+        renderLockedState: function () {
+            const container = document.querySelector('.pm-container');
+            if (container) container.classList.add('locked-mode');
+
+            if (this.listContainer) {
+                this.listContainer.innerHTML = `
+                    <div class="pm-locked-state">
+                        <i class="fa-solid fa-shield-cat"></i>
+                        <h3>Vault is Locked</h3>
+                        <p>Enter your Master PIN to view your passwords.</p>
+                        
+                        <div class="pm-inline-auth">
+                            <input type="password" id="pm-inline-pin" placeholder="Enter PIN" maxlength="8">
+                            <button id="pm-inline-unlock-btn" class="form-btn-save">Unlock</button>
+                        </div>
+                        <p id="pm-inline-error" style="color: #ff4d4d; margin-top: 10px; height: 20px; font-size: 0.9rem;"></p>
+                    </div>
+                `;
+            }
+            // Re-cache and bind for new elements
+            this.cacheDOM();
+            this.bindEvents(); // Re-bind inline events to new DOM
+
+            if (this.countBadge) this.countBadge.textContent = "Locked";
+            // Focus input
+            setTimeout(() => {
+                if (this.inlinePinInput) this.inlinePinInput.focus();
+            }, 100);
+        },
+
+        renderList: function (secrets) {
+            // Check if we received secrets from Locker (via explicit call)
+            if (secrets) {
+                this.secrets = secrets;
+                this.lockerDataRef = { secrets: secrets }; // Mock ref if needed
+            }
+
+            if (!this.lockerDataRef) {
+                this.renderLockedState();
+                return;
+            }
+
+            console.log("PM: renderList unlocking UI. Secrets:", this.secrets);
+
+            // Unlock Successful: Remove Locked Mode
+            const container = document.querySelector('.pm-container');
+            if (container) container.classList.remove('locked-mode');
 
             // Filter
             let filtered = this.secrets.filter(s => {
@@ -148,6 +226,8 @@
                 const matchesFilter = this.filter === 'all' || (this.filter === 'favorites' && s.favorite);
                 return matchesSearch && matchesFilter;
             });
+
+            console.log("PM: Filtering results:", filtered.length);
 
             if (this.countBadge) this.countBadge.textContent = `${filtered.length} items`;
 
@@ -170,25 +250,27 @@
                                 ${initial}
                             </div>
                         </div>
-                        <div class="pm-card-info">
-                            <div class="pm-card-title">
-                                ${this.escapeHtml(s.title)} 
-                                ${s.site ? `<a href="${this.escapeHtml(s.site)}" target="_blank" title="Open Link" class="pm-site-link"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
-                            </div>
-                            ${s.user ? `<div class="pm-card-subtitle">${this.escapeHtml(s.user)}</div>` : ''}
-                        </div>
                         
-                        <div class="pm-header-actions">
-                             <button class="pm-icon-btn" onclick="window.Homepage.PasswordManager.openEditModal(${s.id})" title="Edit">
-                                <i class="fa-solid fa-pencil"></i>
-                            </button>
-                            <button class="pm-icon-btn delete" onclick="window.Homepage.PasswordManager.deleteSecret(${s.id})" title="Delete">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                            <button class="pm-icon-btn ${s.favorite ? 'active' : ''}" style="${s.favorite ? 'color:gold; opacity:1;' : ''}"
-                                onclick="window.Homepage.PasswordManager.toggleFavorite(${s.id})">
-                                <i class="${s.favorite ? 'fa-solid' : 'fa-regular'} fa-star"></i>
-                            </button>
+                        <div class="pm-card-details">
+                            <div class="pm-card-row-top">
+                                <div class="pm-card-title">
+                                    ${this.escapeHtml(s.title)} 
+                                    ${s.site ? `<a href="${this.escapeHtml(s.site)}" target="_blank" title="Open Link" class="pm-site-link"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
+                                </div>
+                                <div class="pm-header-actions">
+                                    <button class="pm-icon-btn" onclick="window.Homepage.PasswordManager.openEditModal(${s.id})" title="Edit">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </button>
+                                    <button class="pm-icon-btn delete" onclick="window.Homepage.PasswordManager.deleteSecret(${s.id})" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                    <button class="pm-icon-btn ${s.favorite ? 'active' : ''}" style="${s.favorite ? 'color:gold; opacity:1;' : ''}"
+                                        onclick="window.Homepage.PasswordManager.toggleFavorite(${s.id})">
+                                        <i class="${s.favorite ? 'fa-solid' : 'fa-regular'} fa-star"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            ${s.user ? `<div class="pm-card-subtitle">${this.escapeHtml(s.user)}</div>` : '<div class="pm-card-subtitle placeholder">No Username</div>'}
                         </div>
                     </div>
                     

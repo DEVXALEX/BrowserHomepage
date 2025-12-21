@@ -541,3 +541,39 @@ A comprehensive interface cleanup focusing on simplifying navigation and improvi
 - Navbar buttons trigger correct modals.
 
 > **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
+
+---
+
+## 12. Password Manager Refinements & Inline Unlock
+**Date:** 2025-12-20 | **Time:** 23:30
+
+### 🔐 What Was Added
+Refined the Password Manager with a "Locked Focus Mode" and smoother inline unlocking.
+
+### ✨ Features
+- **Locked Mode Visibility:** When locked, the sidebar (search, filters, logo) and header are hidden, focusing attention solely on the unlock screen.
+- **Inline Unlock:** Replaced the modal popup with a clean, inline PIN input field directly on the locked view.
+- **UI Polish:** 
+  - Added visual underline to the active "Passwords" navbar link.
+  - Converted "Lock Vault" sidebar button to a larger, centered icon-only button.
+  - Removed unwanted gaps in the layout.
+
+### 📁 Files Modified
+- **JS:** 
+  - `locker.js`: Updated to return boolean status (Success/Fail) for headless unlocking; added null checks.
+  - `passwordManager.js`: Implemented `handleInlineUnlock` and `renderLockedState` logic; removed modal dependency.
+  - `githubSync.js`: Fixed duplicate function causing sync badge issues.
+- **CSS:** `passwords.css`: Added `.locked-mode` styles to hide sidebar/header; styled inline PIN input.
+- **HTML:** `passwords.html`: Updated locked section structure.
+
+### 🐛 Bugs Fixed
+- **Unlock Failure:** Fixed communication breakdown between `locker.js` (which was returning void) and `passwordManager.js` (which expected boolean).
+- **Sync Badge**: Deleted duplicate `updateStatus` method that was preventing the cloud sync badge from updating.
+
+### ✅ Verified Working
+- Vault locks and hides sidebar/header navigation.
+- Inline PIN entry correctly unlocks the vault and restores the full dashboard.
+- Active link in navbar is clearly visible.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
+

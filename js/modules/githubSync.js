@@ -311,12 +311,35 @@
             }
         },
 
+        // UI Event Handler
         handleUnlock: async function () {
             const pin = this.unlockPinInput.value;
-            if (!this.encryptedToken || !pin) return;
+            if (!pin) return;
 
             this.unlockBtn.textContent = 'Decrypting...';
             this.unlockError.textContent = '';
+
+            const success = await this.tryUnlock(pin);
+
+            this.unlockBtn.textContent = 'Unlock';
+
+            if (success) {
+                this.unlockModal.classList.remove('visible');
+                // Callback handled in tryUnlock or here? 
+                // tryUnlock handles finishInit.
+                // handleUnlock logic for callbacks specific to UI modal:
+                if (this.pendingUnlockCallback) {
+                    this.pendingUnlockCallback(pin);
+                    this.pendingUnlockCallback = null;
+                }
+            } else {
+                this.unlockError.textContent = 'Incorrect PIN';
+            }
+        },
+
+        // Programmatic Unlock
+        tryUnlock: async function (pin) {
+            if (!this.encryptedToken || !pin) return false;
 
             try {
                 const decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin);
@@ -327,20 +350,16 @@
                 }
 
                 this.token = decryptedToken;
-                this.unlockModal.classList.remove('visible');
                 this.finishInit(); // Resume init
 
-                // Trigger Callback if exists
-                if (this.pendingUnlockCallback) {
-                    this.pendingUnlockCallback(pin);
-                    this.pendingUnlockCallback = null;
-                }
+                // Update Badge State immediately
+                this.updateStatus('Session Unlocked', 'success');
+
+                return true;
 
             } catch (e) {
                 console.error("Unlock failed", e);
-                this.unlockError.textContent = 'Incorrect PIN';
-            } finally {
-                this.unlockBtn.textContent = 'Unlock';
+                return false;
             }
         },
 
@@ -632,12 +651,7 @@
             };
         },
 
-        updateStatus: function (msg, type = 'normal') {
-            if (this.statusEl) {
-                this.statusEl.textContent = `Status: ${msg}`;
-                this.statusEl.style.color = type === 'success' ? '#4dff88' : (type === 'error' ? '#ff4d4d' : '#888');
-            }
-        },
+
 
         enableControls: function () {
             if (this.manualSyncBtn) this.manualSyncBtn.disabled = false;
