@@ -500,6 +500,7 @@
                     },
                     body: JSON.stringify({
                         files: {
+                            // ISOLATION POLICY: Only touch 'dashboard_backup.json'. NEVER include 'locker.enc'.
                             [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) }
                         }
                     })

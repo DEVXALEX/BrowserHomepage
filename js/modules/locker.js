@@ -280,6 +280,7 @@
                 // Construct File Object (Standard Format)
                 const fileContent = {
                     salt: encrypted.salt,
+                    // ISOLATION POLICY: Only touch 'locker.enc'. NEVER include 'dashboard_backup.json'.
                     iv: encrypted.iv,
                     data: encrypted.data
                 };
