@@ -100,6 +100,7 @@
         },
 
         close: function () {
+            this.stopIdleTimer(); // Stop timer
             this.modal.classList.remove('visible');
             this.onUnlockCallback = null; // Clear callback
             // ZERO KNOWLEDGE WIPE
@@ -115,6 +116,8 @@
         },
 
         showListView: function () {
+            this.startIdleTimer(); // Start Auto-Lock Timer
+
             if (this.authView) this.authView.style.display = 'none';
 
             // If an external consumer requested access, give it to them and hide the modal
@@ -134,10 +137,13 @@
         handleUnlock: async function (validPin = null) {
             // Logs removed by user request
             let pin = validPin || (this.pinInput ? this.pinInput.value : '');
-            if (pin) pin = pin.trim();
+            if (!pin) {
+                this.showError("Please enter your Master Password");
+                return;
+            }
 
             if (!pin || pin.length < 4) {
-                if (this.errorMsg) this.errorMsg.textContent = 'PIN must be at least 4 digits';
+                if (this.errorMsg) this.errorMsg.textContent = 'Master Password must be at least 4 chars';
                 return false;
             }
 
@@ -188,7 +194,7 @@
                             app.Toast.show("Security Upgraded to 600k Rounds", "success");
                         } catch (e2) {
                             console.error("Locker: 100k failed too (" + e2.message + ").");
-                            throw new Error("Incorrect PIN");
+                            throw new Error("Incorrect Password");
                         }
                     }
 
@@ -213,8 +219,8 @@
 
             } catch (e) {
                 console.error("Locker: Error", e);
-                if (e.message === "Incorrect PIN") {
-                    if (this.errorMsg) this.errorMsg.textContent = 'Incorrect PIN';
+                if (e.message === "Incorrect PIN" || e.message === "Incorrect Password") {
+                    if (this.errorMsg) this.errorMsg.textContent = 'Incorrect Master Password';
                 } else if (e.message.includes("Session Locked")) {
                     if (this.errorMsg) this.errorMsg.textContent = 'Session Unavailable. Check Connection.';
                 } else {
@@ -225,6 +231,43 @@
             } finally {
                 if (this.unlockBtn) this.unlockBtn.textContent = 'Unlock';
             }
+        },
+
+        // --- Idle Timer ---
+        idleTimer: null,
+        IDLE_TIMEOUT: 5 * 60 * 1000, // 5 Minutes
+
+        startIdleTimer: function () {
+            this.resetIdleTimer();
+            // Use a bound handler to ensure 'this' context is correct
+            this._boundResetTimerHandler = this._resetTimerHandler.bind(this);
+            ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+                document.addEventListener(evt, this._boundResetTimerHandler);
+            });
+        },
+
+        stopIdleTimer: function () {
+            if (this.idleTimer) clearTimeout(this.idleTimer);
+            if (this._boundResetTimerHandler) { // Ensure handler exists before removing
+                ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+                    document.removeEventListener(evt, this._boundResetTimerHandler);
+                });
+                this._boundResetTimerHandler = null; // Clear the bound handler
+            }
+        },
+
+        resetIdleTimer: function () {
+            if (this.idleTimer) clearTimeout(this.idleTimer);
+            this.idleTimer = setTimeout(() => {
+                console.log("Locker: Auto-locking due to inactivity.");
+                if (app.Toast) app.Toast.show("Vault Auto-Locked. Refreshing...", "info");
+                setTimeout(() => location.reload(), 1500); // Reload to secure
+            }, this.IDLE_TIMEOUT);
+        },
+
+        _resetTimerHandler: function () {
+            // This method is bound in startIdleTimer, so 'this' refers to app.Locker
+            this.resetIdleTimer();
         },
 
         handleAddSecret: async function () {

@@ -430,15 +430,12 @@
                         </div>
                     </div>
                     
-                    <div class="pm-pass-field">
+                    <div class="pm-pass-field" onclick="window.Homepage.PasswordManager.copySecret(${s.id}, event)" title="Click to Copy">
                         <!-- value set to 10 characters to force 10 dots visually -->
                         <input type="password" value="0000000000" readonly id="pass-field-${s.id}">
                         <div class="pm-pass-actions">
-                            <button class="pm-icon-btn small" onclick="window.Homepage.PasswordManager.toggleVisibility(${s.id})" title="Show/Hide">
+                            <button class="pm-icon-btn small" onclick="event.stopPropagation(); window.Homepage.PasswordManager.toggleVisibility(${s.id})" title="Show/Hide">
                                 <i class="fa-solid fa-eye" id="icon-eye-${s.id}"></i>
-                            </button>
-                            <button class="pm-icon-btn small" onclick="window.Homepage.PasswordManager.copyToClipboard('${this.escapeHtml(s.pass, true)}')" title="Copy">
-                                <i class="fa-solid fa-copy"></i>
                             </button>
                         </div>
                     </div>
@@ -606,9 +603,32 @@
             return pass;
         },
 
-        copyToClipboard: function (text) {
+        copySecret: function (id, event) {
+            const s = this.secrets.find(x => x.id === id);
+            if (s) {
+                // Determine coords if event exists
+                let x = null, y = null;
+                if (event) {
+                    x = event.clientX;
+                    y = event.clientY;
+                }
+                this.copyToClipboard(s.pass, x, y);
+            }
+        },
+
+        copyToClipboard: function (text, x = null, y = null) {
+            // Clear pending clear-tasks
+            if (this._clipboardTimer) clearTimeout(this._clipboardTimer);
+
             navigator.clipboard.writeText(text).then(() => {
-                // Toast could go here
+                if (app.Toast) app.Toast.show("Password Copied", "success", x, y);
+
+                // Security: Auto-Clear after 60 seconds
+                this._clipboardTimer = setTimeout(() => {
+                    navigator.clipboard.writeText(' ').then(() => {
+                        if (app.Toast) app.Toast.show("Clipboard Cleared", "info");
+                    }).catch(err => console.error("Clipboard clear failed", err));
+                }, 60000);
             });
         },
 
