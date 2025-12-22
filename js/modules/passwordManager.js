@@ -285,11 +285,26 @@
                 console.log("PM: Attempting to unlock session...");
                 const sessionUnlocked = await app.githubSync.tryUnlock(pin);
                 if (!sessionUnlocked) {
-                    console.warn("PM: Session Unlock failed. Trying local vault anyway (Recovery Mode).");
-                    // Do NOT return. Allow attempt to unlock Locker in case passwords are out of sync.
+                    console.warn("PM: Session Unlock failed (Incorrect Password?). Stopping.");
+                    if (errorEl) errorEl.textContent = "Incorrect Master Password";
+                    if (this.inlineUnlockBtn) this.inlineUnlockBtn.innerHTML = 'Unlock';
+                    // Re-focus input for retry
+                    if (this.inlinePinInput) {
+                        this.inlinePinInput.value = '';
+                        this.inlinePinInput.focus();
+                    }
+                    return;
                 } else {
                     console.log("PM: Session Unlocked. Proceeding to Locker.");
                 }
+            }
+
+            // 1.5 Handle Unconfigured State (No Token, No Encrypted Token)
+            if (app.githubSync && !app.githubSync.token && !app.githubSync.encryptedToken) {
+                console.warn("PM: Vault Not Configured (No Token). Blocking Unlock.");
+                if (errorEl) errorEl.textContent = "Vault Not Configured. Please Setup in Settings.";
+                if (this.inlineUnlockBtn) this.inlineUnlockBtn.innerHTML = 'Unlock';
+                return;
             }
 
             // 2. Register Callback so Locker knows where to send data
