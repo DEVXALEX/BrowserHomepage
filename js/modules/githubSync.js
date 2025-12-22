@@ -28,6 +28,15 @@
                     if (parsed.iv && parsed.data && parsed.salt) {
                         // Case A: Encrypted Token
                         this.encryptedToken = parsed;
+
+                        // DEBUG: Inspect Loaded Token
+                        console.log("GithubSync [INIT] Loaded Encrypted Token:", this.encryptedToken);
+                        if (this.encryptedToken.salt) {
+                            console.log("GithubSync [INIT] Salt Length:", this.encryptedToken.salt.length);
+                        } else {
+                            console.error("GithubSync [INIT] CRITICAL: Salt is MISSING in loaded token!");
+                        }
+
                         this.updateStatus('Session Locked (Unlock in Settings)', 'normal');
                         this.showLockedState(); // Show Unlock Button, Hide Setup
                         return;
@@ -266,7 +275,13 @@
                 // to not save state yet.
                 // Actually, let's just Prompt for PIN FIRST.
 
-                const pin = prompt("🔐 Create a Master PIN to secure this token:\n(You will need this PIN every time you restart the browser)", "");
+                let pin = prompt("🔐 Create a Master PIN to secure this token:\n(You will need this PIN every time you restart the browser)", "");
+                if (pin) pin = pin.trim();
+
+                // DEBUG: Log Hex of PIN to compare
+                const pinHex = Array.from(new TextEncoder().encode(pin)).map(b => b.toString(16).padStart(2, '0')).join('');
+                console.log("GithubSync [SETUP] PIN Hex:", pinHex);
+
                 if (!pin || pin.length < 4) {
                     alert("Connection Cancelled. PIN must be at least 4 digits.");
                     this.updateStatus('Setup Cancelled');
@@ -277,8 +292,25 @@
                 this.updateStatus('Encrypting...');
                 const encrypted = await app.Crypto.encryptData(token, pin);
 
+                // --- VERIFICATION STEP (Added to catch immediate failures) ---
+                try {
+                    console.log("GithubSync: Verifying encryption...");
+                    const check = await app.Crypto.decryptData(encrypted, pin);
+                    if (check !== token) throw new Error("Verification Mismatch");
+                    console.log("GithubSync: Encryption verified successfully.");
+                } catch (verifyError) {
+                    console.error("GithubSync: CRITICAL - Encryption Verification Failed!", verifyError);
+                    alert("Security Check Failed!\nThe system could not verify your PIN immediately after setting it.\n\nPlease try a different PIN or check your browser security settings.");
+                    this.updateStatus('Error: Encryption Verification Failed', 'error');
+                    return;
+                }
+                // -------------------------------------------------------------
+
                 // 3. Save Encrypted Token
                 app.Storage.setString('gh_token', JSON.stringify(encrypted));
+
+                console.log("GithubSync [SETUP] Saved Encrypted Token:", encrypted);
+                console.log("GithubSync [SETUP] Salt:", encrypted.salt);
 
                 // 4. Set Memory State
                 this.token = token;
@@ -313,7 +345,14 @@
 
         // UI Event Handler
         handleUnlock: async function () {
-            const pin = this.unlockPinInput.value;
+            let pin = this.unlockPinInput.value;
+            if (pin) pin = pin.trim();
+
+            // DEBUG: Log Hex of PIN
+            if (pin) {
+                const pinHex = Array.from(new TextEncoder().encode(pin)).map(b => b.toString(16).padStart(2, '0')).join('');
+                console.log("GithubSync [UNLOCK] PIN Hex:", pinHex);
+            }
             if (!pin) return;
 
             this.unlockBtn.textContent = 'Decrypting...';
@@ -342,26 +381,22 @@
             if (!this.encryptedToken || !pin) return false;
 
             try {
-                const decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin);
-
-                // Verify it looks like a token?
-                if (!decryptedToken || !decryptedToken.startsWith('gh')) {
-                    // Soft check. 
-                }
+                // 1. Try New Standard (600k)
+                // console.log("GithubSync: Attempting token unlock with 600k...");
+                let decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin, 600000);
 
                 this.token = decryptedToken;
-                this.finishInit(); // Resume init
-
-                // Update Badge State immediately
-                this.updateStatus('Session Unlocked', 'success');
-
+                this.finishInit();
                 return true;
 
-            } catch (e) {
-                console.error("Unlock failed", e);
+            } catch (e1) {
+                console.warn("GithubSync: Token unlock 600k failed.");
+                console.error(e1);
                 return false;
             }
         },
+
+
 
         checkForBackup: async function () {
             try {

@@ -18,6 +18,18 @@
             this.checkState();
         },
 
+        applyTheme: function () {
+            const savedTheme = localStorage.getItem('pm_theme') || 'dark';
+            this.theme = savedTheme;
+            if (this.theme === 'light') {
+                document.body.classList.add('light-mode');
+                if (this.themeToggleBtn) this.themeToggleBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            } else {
+                document.body.classList.remove('light-mode');
+                if (this.themeToggleBtn) this.themeToggleBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            }
+        },
+
         cacheDOM: function () {
             this.appContainer = document.getElementById('password-manager-app');
             this.themeToggleBtn = document.getElementById('pm-theme-toggle');
@@ -25,8 +37,24 @@
             this.countBadge = document.getElementById('pm-count-badge');
             this.listContainer = document.getElementById('pm-list-container');
 
+            // Change Password Elements
+            this.changePassBtn = document.getElementById('pm-change-pass-btn');
+            this.configModal = document.getElementById('pm-config-modal');
+            this.newPassInput = document.getElementById('pm-new-pass');
+            this.confirmPassInput = document.getElementById('pm-confirm-pass');
+            this.configSaveBtn = document.getElementById('pm-config-save');
+            this.configCancelBtn = document.getElementById('pm-config-cancel');
+            this.currentPassInput = document.getElementById('pm-current-pass');
+
+            // Requirements Elements
+            this.reqLength = document.getElementById('req-length');
+            this.reqCase = document.getElementById('req-case');
+            this.reqNum = document.getElementById('req-num');
+            this.reqSpecial = document.getElementById('req-special');
+
             // Inline Unlock Elements
             this.inlinePinInput = document.getElementById('pm-inline-pin');
+            if (this.inlinePinInput) this.inlinePinInput.removeAttribute('maxlength'); // Force removal
             this.inlineUnlockBtn = document.getElementById('pm-inline-unlock-btn');
 
             // Sidebar
@@ -34,14 +62,15 @@
             this.filterBtns = document.querySelectorAll('.pm-filter-btn');
             this.addBtn = document.getElementById('pm-add-btn');
             this.lockBtn = document.getElementById('pm-lock-btn');
-            this.unlockBtn = document.getElementById('pm-unlock-btn'); // In locked state placeholder
+            this.unlockBtn = document.getElementById('pm-unlock-btn');
+            this.resetVaultLink = document.getElementById('pm-reset-vault-link');
 
             // Modal
             this.editModal = document.getElementById('pm-edit-modal');
             this.modalTitle = document.getElementById('pm-modal-title');
             this.editIdInput = document.getElementById('pm-edit-id');
             this.titleInput = document.getElementById('pm-title-input');
-            this.siteInput = document.getElementById('pm-site-input'); // New field
+            this.siteInput = document.getElementById('pm-site-input');
             this.userInput = document.getElementById('pm-user-input');
             this.passInput = document.getElementById('pm-pass-input');
             this.genPassBtn = document.getElementById('pm-gen-pass-btn');
@@ -49,10 +78,114 @@
             this.saveBtn = document.getElementById('pm-save-btn');
         },
 
+        checkPasswordStrength: function (password) {
+            const hasLength = password.length >= 8;
+            const hasCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
+            const hasNum = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            this.updateReqItem(this.reqLength, hasLength);
+            this.updateReqItem(this.reqCase, hasCase);
+            this.updateReqItem(this.reqNum, hasNum);
+            this.updateReqItem(this.reqSpecial, hasSpecial);
+
+            return hasLength && hasCase && hasNum && hasSpecial;
+        },
+
+        updateReqItem: function (el, isValid) {
+            if (!el) return;
+            if (isValid) {
+                el.classList.add('valid');
+            } else {
+                el.classList.remove('valid');
+            }
+        },
+
+        saveNewPassword: async function () {
+            const currentPass = this.currentPassInput ? this.currentPassInput.value : '';
+            const newPass = this.newPassInput.value;
+            const confirm = this.confirmPassInput.value;
+
+            if (!currentPass) {
+                alert("Please enter your current password.");
+                return;
+            }
+            if (!this.checkPasswordStrength(newPass)) {
+                alert("New password does not meet security requirements.");
+                return;
+            }
+            if (newPass !== confirm) {
+                alert("Passwords do not match.");
+                return;
+            }
+
+            // Call Locker to perform heavy lifting (pass both old and new passwords)
+            const success = await app.Locker.changeMasterPassword(currentPass, newPass);
+            if (success) {
+                this.configModal.classList.remove('visible');
+                this.currentPassInput.value = '';
+                this.newPassInput.value = '';
+                this.confirmPassInput.value = '';
+            }
+        },
+
+        handleResetVault: function () {
+            if (!confirm("⚠️ CAUTION: This will permanently delete your Master Password link and Cloud Sync settings. Your local passwords will be lost. \n\nContinue with WIPE?")) {
+                return;
+            }
+
+            // Clear all Security & Sync keys
+            const keysToWipe = [
+                'gh_token',
+                'gh_gistId',
+                'gh_autoSync',
+                'gh_lastSync',
+                'github_token_enc',
+                'locker_backup'
+            ];
+
+            keysToWipe.forEach(k => localStorage.removeItem(k));
+
+            app.Toast.show("Vault Reset Successfully. Page Reloading...", "success");
+
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        },
+
         bindEvents: function () {
             // Theme Toggle
             if (this.themeToggleBtn) {
                 this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+            }
+
+            // Change Password
+            if (this.changePassBtn) {
+                this.changePassBtn.addEventListener('click', () => {
+                    this.configModal.classList.add('visible');
+                    if (this.currentPassInput) this.currentPassInput.value = '';
+                    this.newPassInput.value = '';
+                    this.confirmPassInput.value = '';
+                    // Reset Requirements
+                    [this.reqLength, this.reqCase, this.reqNum, this.reqSpecial].forEach(el => {
+                        if (el) el.classList.remove('valid');
+                    });
+                    if (this.currentPassInput) this.currentPassInput.focus();
+                });
+            }
+
+            // Real-time Validation
+            if (this.newPassInput) {
+                this.newPassInput.addEventListener('input', (e) => this.checkPasswordStrength(e.target.value));
+            }
+
+            if (this.configCancelBtn) {
+                this.configCancelBtn.addEventListener('click', () => {
+                    this.configModal.classList.remove('visible');
+                });
+            }
+            if (this.configSaveBtn) {
+                this.configSaveBtn.addEventListener('click', () => this.saveNewPassword());
             }
 
             // Unlock
@@ -75,6 +208,14 @@
             if (this.inlinePinInput) {
                 this.inlinePinInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.handleInlineUnlock();
+                });
+            }
+
+            // Reset Vault
+            if (this.resetVaultLink) {
+                this.resetVaultLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleResetVault();
                 });
             }
 
@@ -103,7 +244,6 @@
             // Modal Actions
             if (this.cancelBtn) this.cancelBtn.addEventListener('click', () => this.closeEditModal());
             if (this.saveBtn) this.saveBtn.addEventListener('click', () => this.saveSecret());
-            if (this.genPassBtn) this.genPassBtn.addEventListener('click', () => this.generatePassword());
 
             // Generate Password
             if (this.genPassBtn) {
@@ -128,7 +268,8 @@
         },
 
         handleInlineUnlock: async function () {
-            const pin = this.inlinePinInput ? this.inlinePinInput.value : '';
+            let pin = this.inlinePinInput ? this.inlinePinInput.value : '';
+            if (pin) pin = pin.trim();
             const errorEl = document.getElementById('pm-inline-error');
 
             if (!pin) {
@@ -144,11 +285,11 @@
                 console.log("PM: Attempting to unlock session...");
                 const sessionUnlocked = await app.githubSync.tryUnlock(pin);
                 if (!sessionUnlocked) {
-                    if (errorEl) errorEl.textContent = "Incorrect PIN (Session Unlock)";
-                    if (this.inlineUnlockBtn) this.inlineUnlockBtn.textContent = "Unlock";
-                    return;
+                    console.warn("PM: Session Unlock failed. Trying local vault anyway (Recovery Mode).");
+                    // Do NOT return. Allow attempt to unlock Locker in case passwords are out of sync.
+                } else {
+                    console.log("PM: Session Unlocked. Proceeding to Locker.");
                 }
-                console.log("PM: Session Unlocked. Proceeding to Locker.");
             }
 
             // 2. Register Callback so Locker knows where to send data
@@ -230,8 +371,6 @@
                 return;
             }
 
-            console.log("PM: renderList unlocking UI. Secrets:", this.secrets);
-
             // Unlock Successful: Remove Locked Mode
             const container = document.querySelector('.pm-container');
             if (container) container.classList.remove('locked-mode');
@@ -244,7 +383,7 @@
                 return matchesSearch && matchesFilter;
             });
 
-            console.log("PM: Filtering results:", filtered.length);
+            // console.log("PM: Filtering results:", filtered.length);
 
             if (this.countBadge) this.countBadge.textContent = `${filtered.length} items`;
 
@@ -262,7 +401,7 @@
                     card.innerHTML = `
                     <div class="pm-card-header">
                         <div class="pm-card-logo">
-                             ${logoUrl ? `<img src="${logoUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">` : ''}
+                             ${logoUrl ? `<img src="${logoUrl}" onerror="this.onerror=null; this.src='https://api.dicebear.com/9.x/identicon/svg?seed=${domain || 'random'}'">` : ''}
                             <div class="pm-card-initial" style="display: ${logoUrl ? 'none' : 'flex'}; background-color: ${this.getColorForString(s.title)}">
                                 ${initial}
                             </div>
@@ -381,14 +520,22 @@
         saveSecret: async function () {
             if (!this.lockerDataRef) return;
 
-            const id = this.editIdInput.value ? parseInt(this.editIdInput.value) : Date.now();
+            // Prevent Double Submissions
+            if (this.saveBtn.disabled) return;
+            this.saveBtn.disabled = true;
+            const originalText = this.saveBtn.innerText;
+            this.saveBtn.innerText = "Processing...";
             const title = this.titleInput.value.trim();
             const site = this.siteInput ? this.siteInput.value.trim() : '';
             const user = this.userInput.value.trim();
             const pass = this.passInput.value.trim();
 
+            const id = this.editIdInput.value ? parseInt(this.editIdInput.value) : Date.now();
+
             if (!title) {
                 alert("Title is required.");
+                this.saveBtn.disabled = false;
+                this.saveBtn.innerText = originalText;
                 return;
             }
 
@@ -411,10 +558,17 @@
             }
 
             // Save via Locker Module
-            await this.performSave();
-
-            this.closeEditModal();
-            this.renderList();
+            try {
+                await this.performSave();
+                this.closeEditModal();
+                this.renderList();
+            } catch (e) {
+                console.error("PM: Save Error", e);
+                // Alert is likely handled by Locker, but we ensure UI is usable
+            } finally {
+                this.saveBtn.disabled = false;
+                this.saveBtn.innerText = originalText;
+            }
         },
 
         deleteSecret: async function (id) {

@@ -422,3 +422,8 @@ git push origin --delete branch-name
     ```powershell
     git branch -D branch-name
     ```
+
+### Checking History & File Tracking
+- `git log -n 5 --stat` : View the last 5 commits with a list of modified files.
+- `git ls-files <filename>` : Check if a specific file is being tracked by Git.
+- `git diff --stat` : See a summary of currently uncommitted changes.

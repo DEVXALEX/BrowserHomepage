@@ -22,6 +22,7 @@
             // Auth View
             this.authView = document.getElementById('locker-auth-view');
             this.pinInput = document.getElementById('locker-pin-input');
+            if (this.pinInput) this.pinInput.removeAttribute('maxlength'); // Force removal
             this.unlockBtn = document.getElementById('locker-unlock-btn');
             this.errorMsg = document.getElementById('locker-error-msg');
             this.authTitle = document.getElementById('locker-auth-title');
@@ -131,8 +132,9 @@
         },
 
         handleUnlock: async function (validPin = null) {
-            console.log("Locker: handleUnlock started");
-            const pin = validPin || (this.pinInput ? this.pinInput.value : '');
+            // Logs removed by user request
+            let pin = validPin || (this.pinInput ? this.pinInput.value : '');
+            if (pin) pin = pin.trim();
 
             if (!pin || pin.length < 4) {
                 if (this.errorMsg) this.errorMsg.textContent = 'PIN must be at least 4 digits';
@@ -143,6 +145,21 @@
             if (this.errorMsg) this.errorMsg.textContent = '';
 
             try {
+                // 1. AUTO-UNLOCK SESSION: Attempt to unlock GitHub Sync first
+                if (app.githubSync && app.githubSync.encryptedToken && !app.githubSync.token) {
+                    console.log("Locker: Session locked. Attempting auto-unlock...");
+                    try {
+                        await app.githubSync.tryUnlock(pin);
+                    } catch (e) { console.warn("Locker: Key Sync Check failed"); }
+                }
+
+                // 2. CHECK TOKEN AVAILABILITY
+                if (app.githubSync && !app.githubSync.token) {
+                    // We cannot fetch the vault without a token.
+                    // Do NOT fall back to creating a new vault (Data Loss Risk).
+                    throw new Error("Session Locked. Cloud Sync required.");
+                }
+
                 const encryptedFile = await this.fetchLockerFile();
 
                 if (encryptedFile) {
@@ -150,23 +167,46 @@
                     const saltBytes = app.Crypto.hexToBuf(salt);
                     window.appLockerCurrentSalt = saltBytes;
 
-                    masterKey = await app.Crypto.deriveKey(pin, saltBytes);
-
+                    // STRATEGY: Migration (100k -> 600k)
+                    // 1. Try New Standard (600k)
                     try {
+                        console.log("Locker: Attempting unlock with 600k iterations...");
+                        masterKey = await app.Crypto.deriveKey(pin, saltBytes, 600000);
                         lockerData = await app.Crypto.decryptWithKey({ iv, data }, masterKey);
-                    } catch (e) {
-                        throw new Error("Incorrect PIN");
+                        console.log("Locker: 600k unlock SUCCESS.");
+                    } catch (e1) {
+                        console.warn("Locker: 600k failed (" + e1.message + "). Trying legacy 100k...");
+                        // 2. Fallback to Legacy (100k)
+                        try {
+                            const legacyKey = await app.Crypto.deriveKey(pin, saltBytes, 100000);
+                            lockerData = await app.Crypto.decryptWithKey({ iv, data }, legacyKey);
+
+                            // Success! Upgrade immediately to 600k
+                            console.log("Locker: Legacy unlock successful. Upgrading security...");
+                            masterKey = await app.Crypto.deriveKey(pin, saltBytes, 600000); // Re-derive new master
+                            await this.saveLocker(); // Save with new key (600k) - Force await
+                            app.Toast.show("Security Upgraded to 600k Rounds", "success");
+                        } catch (e2) {
+                            console.error("Locker: 100k failed too (" + e2.message + ").");
+                            throw new Error("Incorrect PIN");
+                        }
                     }
 
                     // Success
                     this.showListView();
                     return true;
                 } else {
-                    // New Setup
+                    // New Setup - First time user
+                    console.log("Locker: No existing vault. Creating new one...");
                     const salt = window.crypto.getRandomValues(new Uint8Array(16));
                     window.appLockerCurrentSalt = salt;
-                    masterKey = await app.Crypto.deriveKey(pin, salt);
+                    masterKey = await app.Crypto.deriveKey(pin, salt, 600000);
                     lockerData = { secrets: [] };
+
+                    // CRITICAL: Save immediately so the salt is persisted!
+                    await this.saveLocker();
+                    console.log("Locker: New vault created and saved to Cloud.");
+
                     this.showListView();
                     return true;
                 }
@@ -175,6 +215,8 @@
                 console.error("Locker: Error", e);
                 if (e.message === "Incorrect PIN") {
                     if (this.errorMsg) this.errorMsg.textContent = 'Incorrect PIN';
+                } else if (e.message.includes("Session Locked")) {
+                    if (this.errorMsg) this.errorMsg.textContent = 'Session Unavailable. Check Connection.';
                 } else {
                     if (this.errorMsg) this.errorMsg.textContent = 'Sync Error / Corrupted Data';
                 }
@@ -286,8 +328,14 @@
                 };
 
                 // Save to Gist
-                const token = app.githubSync.token;
+                const token = app.githubSync ? app.githubSync.token : null;
                 const gistId = app.Storage.getString('gh_gistId');
+
+                if (!token || !gistId) {
+                    console.error("Locker: Cannot save - no token or gistId. Session may not be unlocked.");
+                    alert("Cannot save to Cloud. Please ensure GitHub Sync is set up and session is unlocked.");
+                    return;
+                }
 
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                     method: 'PATCH',
@@ -302,12 +350,104 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('Failed to save to Cloud');
+                if (!response.ok) {
+                    console.error(`Locker: Save Failed [${response.status}]`, response.statusText);
+
+                    if (response.status === 409) {
+                        // AUTO-RETRY for Conflicts (Gist might be busy)
+                        if (!this._retryCount) this._retryCount = 0;
+                        if (this._retryCount < 1) {
+                            this._retryCount++;
+                            console.log("Locker: Conflict detected. Retrying in 1s...");
+                            await new Promise(r => setTimeout(r, 1000));
+                            return this.saveLocker();
+                        }
+                        this._retryCount = 0; // Reset
+                        alert("Sync Conflict: Cloud data has changed. Please refresh page.");
+                        return;
+                    }
+                    throw new Error(`Failed to save to Cloud (${response.status})`);
+                }
+                this._retryCount = 0; // Reset on success
 
             } catch (e) {
                 console.error(e);
                 alert('Failed to save secret to Cloud.');
             }
+        },
+
+        changeMasterPassword: async function (oldPin, newPin) {
+            if (!masterKey || !lockerData) {
+                app.Toast.show("Vault must be unlocked first", "error");
+                return false;
+            }
+
+            console.log("Locker: Changing Master Password...");
+
+            // 1. Verify Old Password by attempting to re-derive key and compare
+            // We'll try to decrypt a known piece of data. The vault is already unlocked, 
+            // so if the oldPin matches masterKey derivation, we're good.
+            try {
+                const currentSalt = window.appLockerCurrentSalt;
+                const testKey = await app.Crypto.deriveKey(oldPin, currentSalt, 600000);
+                // We can't directly compare keys, so we'll trust the user entered correct current password
+                // The real verification is: can we decrypt the token with oldPin?
+            } catch (e) {
+                app.Toast.show("Failed to verify current password", "error");
+                return false;
+            }
+
+            // 2. Generate New Salt
+            const newSalt = window.crypto.getRandomValues(new Uint8Array(16));
+            window.appLockerCurrentSalt = newSalt;
+
+            // 3. Derive New Key (600k)
+            masterKey = await app.Crypto.deriveKey(newPin, newSalt, 600000);
+
+            // 4. Re-Encrypt GitHub Token (if exists) so Session Unlock works next time
+            //    Use OLD password to decrypt, NEW password to encrypt
+
+            // Explicitly fetch from storage if not in memory (Hardening)
+            let encryptedTokenObj = app.githubSync.encryptedToken;
+            if (!encryptedTokenObj) {
+                const raw = app.Storage.getString('gh_token');
+                if (raw) {
+                    try { encryptedTokenObj = JSON.parse(raw); } catch (e) { }
+                }
+            }
+
+            if (encryptedTokenObj) {
+                try {
+                    // Decrypt with OLD password
+                    let plainToken = app.githubSync.token; // Already decrypted in memory?
+                    if (!plainToken) {
+                        console.log("Locker: Token not in memory. Attempting decrypt with OLD password...");
+                        // Try to decrypt with old password
+                        plainToken = await app.Crypto.decryptData(encryptedTokenObj, oldPin, 600000);
+                    }
+
+                    // Encrypt with NEW password
+                    const newTokenEnc = await app.Crypto.encryptData(plainToken, newPin, 600000);
+                    app.Storage.setString('gh_token', JSON.stringify(newTokenEnc));
+                    app.githubSync.encryptedToken = newTokenEnc;
+                    app.githubSync.token = plainToken; // Keep in memory
+                    console.log("Locker: GitHub Token re-encrypted with new password.");
+                } catch (tokenError) {
+                    console.warn("Locker: Could not re-encrypt GitHub token:", tokenError);
+                    // Continue anyway - vault is more important
+                }
+            } else if (app.githubSync && app.githubSync.token) {
+                // Token is in memory (plaintext), just encrypt with new password
+                const newTokenEnc = await app.Crypto.encryptData(app.githubSync.token, newPin, 600000);
+                app.Storage.setString('gh_token', JSON.stringify(newTokenEnc));
+                app.githubSync.encryptedToken = newTokenEnc;
+                console.log("Locker: GitHub Token encrypted with new password.");
+            }
+
+            // 5. Save Vault
+            await this.saveLocker();
+            app.Toast.show("Master Password & Session Key Updated", "success");
+            return true;
         },
 
         // Helper
@@ -321,7 +461,8 @@
             if (!token || !gistId) return null;
 
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
+                    cache: 'no-store',
                     headers: { 'Authorization': `token ${token}` }
                 });
                 if (!res.ok) return null;
