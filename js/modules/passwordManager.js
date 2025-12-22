@@ -4,16 +4,23 @@
         lockerDataRef: null, // Reference to the full locker object
         filter: 'all', // 'all' or 'favorites'
         searchTerm: '',
+        theme: 'dark', // 'dark' or 'light'
 
         init: function () {
             console.log("PasswordManager: Init");
+
+
+
             this.cacheDOM();
             this.bindEvents();
+
+            this.applyTheme(); // Apply after DOM is ready
             this.checkState();
         },
 
         cacheDOM: function () {
             this.appContainer = document.getElementById('password-manager-app');
+            this.themeToggleBtn = document.getElementById('pm-theme-toggle');
             this.viewTitle = document.getElementById('pm-view-title');
             this.countBadge = document.getElementById('pm-count-badge');
             this.listContainer = document.getElementById('pm-list-container');
@@ -43,6 +50,11 @@
         },
 
         bindEvents: function () {
+            // Theme Toggle
+            if (this.themeToggleBtn) {
+                this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+            }
+
             // Unlock
             if (this.unlockBtn) {
                 console.log("PasswordManager: Binding unlock button");
@@ -454,7 +466,9 @@
             }
             const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
             return '#' + "00000".substring(0, 6 - c.length) + c;
-        }
+        },
+
+
 
     };
 

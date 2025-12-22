@@ -476,9 +476,34 @@ implemented a "Secure Vault" architecture to encrypt sensitive data (GitHub Toke
 - Sync works correctly after PIN entry.
 - Locker secrets can still be decrypted (using shared module).
 
-> **[View Detailed Session Summary](session_summary/session_2025-12-18.md)**
+> **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
 
+---
 
+## 13. Password Manager Light Theme (Dedicated Page)
+**Date:** 2025-12-22 | **Time:** 11:00
+
+### 🎨 What Was Added
+Implemented a dedicated **Light Theme** for the Password Manager, accessible via a toggle button.
+
+### ✨ Features
+- **Separate HTML Page:** Created `passwords-light.html` to guarantee clean styling without CSS conflicts.
+- **Theme Toggle:** Sun/Moon icon toggle navigates seamlessly between Dark and Light versions.
+- **Visual Design:** High-contrast White/Orange theme for better readability in bright environments.
+- **Persistence:** Uses URL-based persistence (different pages) rather than fragile local storage state.
+
+### 📁 Files Modified
+- **Created:** `passwords-light.html`, `css/pages/passwords-light.css`
+- **Modified:** `passwords.html` (Added toggle link, cleaned up JS/CSS refs)
+- **Cleaned:** `js/modules/passwordManager.js`, `css/pages/passwords.css` (Removed failed dynamic toggle logic)
+
+### ✅ Verified Working
+- Dark Mode is default.
+- Clicking Sun icon loads Light Mode page instantly.
+- Clicking Moon icon returns to Dark Mode.
+- All Password Manager features (Unlock, Search, Edit) work on both pages.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**
 ---
 
 ## 10. Search Bar Improvements

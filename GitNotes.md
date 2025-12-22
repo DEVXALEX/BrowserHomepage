@@ -337,23 +337,59 @@ When you ran `git pull`, Git did the following:
     *   **Scenario B (Conflict):** You BOTH changed line 10 of `header.js`. **Git stops** and asks you to choose. ("Merge Conflict").
 
 ## 11. The Panic Room (Mistake Management)
-**Scenario:** "I just made a commit, but I didn't mean to!"
+**Scenario:** "I just messed up. How do I go back?"
 
-### Option A: The "Undo" Button (Soft Reset)
+### Option A: The "Oops, I typed the message wrong" (Amend)
+*   **Goal:** Change the message of the LAST commit.
+*   **Command:** `git commit --amend -m "New better message"`
+*   **Condition:** You haven't pushed yet.
+
+### Option B: The "I forgot a file in the commit" (Amend)
+*   **Goal:** Add a forgotten file to the previous commit without making a new "oops" commit.
+*   **Steps:**
+    1. `git add forgotten_file.js`
+    2. `git commit --amend --no-edit`
+
+### Option C: The "Undo Button" (Soft Reset)
 *   **Goal:** Undo the commit, but **KEEP** your file changes (so you can fix them).
 *   **Command:** `git reset --soft HEAD~1`
-*   **Translation:** "Go back 1 step in history, but leave my files as they are."
+*   **Translation:** "Go back 1 step in history, but keep my work in the staging area."
 
-### Option B: The "Nuke" Button (Hard Reset)
+### Option D: The "Discard Changes" (Restore)
+*   **Goal:** You modified a file but hate the changes. You want the last committed version back.
+*   **Command:** `git restore filename` (for one file)
+*   **Command:** `git restore .` (for ALL files - careful!)
+*   **Translation:** "Throw away my changes to this file."
+
+### Option E: The "Unstage" (Restore Staged)
+*   **Goal:** You ran `git add`, but you didn't mean to properly stage that file yet.
+*   **Command:** `git restore --staged filename`
+*   **Translation:** "Take this file out of the staging area, but keep the changes in the file."
+
+### Option F: The "Nuke Button" (Hard Reset)
 *   **Goal:** Destroy the commit AND destroy the file changes.
 *   **Command:** `git reset --hard HEAD~1`
-*   **Translation:** "Go back 1 step and make it look like that work never happened."
+*   **Translation:** "Go back 1 step and delete everything I did since then."
 
-### Option C: The "Public" Fix (Revert)
+### Option G: The "Public Undo" (Revert)
 *   **Goal:** You already **pushed** the mistake to GitHub.
 *   **Command:** `git revert <commit-hash>`
 *   **Translation:** "Make a NEW commit that does the exact opposite of the bad commit."
 *   **Why:** You never rewrite history that others might have downloaded.
+
+### 🛑 Undo Cheat Sheet
+
+| Situation | Command |
+| :--- | :--- |
+| **Changes in file are bad** | `git restore <file>` |
+| **Staged a file by mistake** | `git restore --staged <file>` |
+| **Wrong commit message** | `git commit --amend -m "..."` |
+| **Forgot to add a file** | `git add <file>` then `git commit --amend` |
+| **Undo commit, keep code** | `git reset --soft HEAD~1` |
+| **Undo commit, destroy code** | `git reset --hard HEAD~1` |
+| **Undo PUSHED commit** | `git revert <hash>` |
+
+
 
 ## 12. Spring Cleaning (Deleting Branches)
 **Question:** "Is it safe to delete this branch?"

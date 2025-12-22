@@ -21,8 +21,9 @@
                 }
                 break;
             case 'passwords':
-                // Check if we are already on the page
-                if (!window.location.pathname.includes('passwords.html')) {
+                // Check if we are already on a passwords page (light or dark)
+                // If not, go to default passwords page
+                if (!window.location.pathname.includes('passwords')) {
                     window.location.href = 'passwords.html';
                 }
                 break;
@@ -31,15 +32,13 @@
                 break;
             case 'todo': // Fallthrough to notes
             case 'notes':
-                // Notes module now binds to this nav item directly
-                // If we are on passwords page, these might need to redirect Home first or open a global modal?
-                // For now, let's assume they work if the modules are loaded, or redirect home.
-                if (window.location.pathname.includes('passwords.html')) {
-                    window.location.href = 'index.html#notes'; // Simple fallback
+                // If we are on ANY passwords page, redirect to index with hash
+                if (window.location.pathname.includes('passwords')) {
+                    window.location.href = 'index.html#notes';
                 }
                 break;
             case 'bookmarks':
-                if (window.location.pathname.includes('passwords.html')) {
+                if (window.location.pathname.includes('passwords')) {
                     window.location.href = 'index.html#bookmarks';
                 }
                 break;
