@@ -292,7 +292,8 @@
                     </div>
                     
                     <div class="pm-pass-field">
-                        <input type="password" value="${this.escapeHtml(s.pass, true)}" readonly id="pass-field-${s.id}">
+                        <!-- value set to 10 characters to force 10 dots visually -->
+                        <input type="password" value="0000000000" readonly id="pass-field-${s.id}">
                         <div class="pm-pass-actions">
                             <button class="pm-icon-btn small" onclick="window.Homepage.PasswordManager.toggleVisibility(${s.id})" title="Show/Hide">
                                 <i class="fa-solid fa-eye" id="icon-eye-${s.id}"></i>
@@ -312,11 +313,18 @@
             const input = document.getElementById(`pass-field-${id}`);
             const icon = document.getElementById(`icon-eye-${id}`);
             if (input && icon) {
+                const s = this.secrets.find(x => x.id === id);
+                if (!s) return; // Should not happen
+
                 if (input.type === 'password') {
+                    // Reveal: Set real password
+                    input.value = s.pass;
                     input.type = 'text';
                     icon.className = 'fa-solid fa-eye-slash';
                     icon.style.color = 'var(--pm-accent)';
                 } else {
+                    // Mask: Set 10-char dummy
+                    input.value = '0000000000';
                     input.type = 'password';
                     icon.className = 'fa-solid fa-eye';
                     icon.style.color = '';
