@@ -7,6 +7,12 @@
 - **Commit**: A snapshot of your files at a specific moment.
 - **Remote (Origin)**: The "Cloud" version of your repo (GitHub).
 
+### The "Three Copies" of your Code
+To understand how Git syncs, remember that it keeps three separate lists:
+1.  **Your Local Branch**: (e.g., `main`) — Your actual work on your hard drive.
+2.  **The GitHub Branch**: The actual code sitting on the servers in the cloud.
+3.  **The Remote-Tracking Branch (The "Bookmark")**: (e.g., `origin/main`) — A copy on your computer that says *"Last time I checked, this is what was on GitHub."*
+
 ## 2. Setup Commands (One-Time)
 Used to start a project or link it to GitHub.
 
@@ -427,9 +433,15 @@ git push origin --delete branch-name
 - `git log -n 5 --stat` : View the last 5 commits with a list of modified files.
 - `git ls-files <filename>` : Check if a specific file is being tracked by Git.
 - `git diff --stat` : See a summary of currently uncommitted changes.
+- `git ls-files <filename>` : Check if a specific file is being tracked by Git.
 
 ## 13. Advanced History & Branch Investigation
 Used when you need to know "How did I get here?" or "Where did this branch start?"
+
+### Snapshot Commands (The Dashboard)
+- `git branch -v`: **Verbose Mode**. Shows branch name, latest commit ID, and message. Great for "What was I doing here?".
+- `git branch -a`: **All Folders**. Shows local branches AND remote branches (GitHub). Remote ones start with `remotes/origin/`.
+- `git log --oneline -n 10`: **History Peek**. Shows the last 10 commits in a beautiful single-line list.
 
 ### Visualizing the Branch Graph
 ```powershell
@@ -447,3 +459,41 @@ git reflog show <branch-name>
 *   **What it does:** Shows every time your HEAD (the pointer) moved.
 *   **Why:** If you aren't sure where a branch came from, look at the last line in the reflog. It will say "checkout: moving from [parent] to [branch]".
 *   **Analogy:** The "Black Box" of your Git repository. It records everything, even if you delete a branch or a commit.
+
+## 14. Cloud Cleanup & Sync Status
+How to manage the relationship between your computer and GitHub.
+
+### Refreshing the Address Book
+```powershell
+git fetch origin --prune
+```
+*   **Concept:** "Sync the bookmarks."
+*   **Action:** Downloads latest branch list from GitHub. The `--prune` flag deletes your local bookmarks for branches that were deleted on the server.
+*   **Why:** Prevents your `git branch -a` list from filling up with "stale" branches that don't exist anymore.
+
+#### The "Set and Forget" Solution (Auto-Prune)
+If you want Git to do this cleanup for you automatically every time you pull or fetch:
+```powershell
+git config --global fetch.prune true
+```
+*   **The Breakdown**:
+    *   `--global`: Applies to EVERY project on your computer.
+    *   `fetch.prune`: The "cleaning" behavior.
+    *   `true`: Turns it ON.
+*   **Result**: Every time you `git fetch` or `git pull`, Git automatically deletes local "ghost" bookmarks for branches that no longer exist on GitHub. You never need to type `--prune` again.
+
+### The "Branch-Health" Check
+```powershell
+git branch -vv
+```
+*   **What to look for:**
+    *   **`[origin/main: behind 12]`**: GitHub has 12 commits you don't have yet. (Run `git pull`).
+    *   **`[origin/main: ahead 2]`**: You have 2 commits GitHub doesn't have yet. (Run `git push`).
+    *   **`[origin/feature: gone]`**: The branch was deleted on GitHub. Safe to delete locally.
+
+### Finding Merged Work on Server
+```powershell
+git branch -r --merged origin/main
+```
+*   **Concept:** "Which remote branches are already inside main?"
+*   **Why:** Safely identifies which branches on GitHub can be deleted without losing code.
