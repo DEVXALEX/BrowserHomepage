@@ -45,18 +45,25 @@
 }
 
 #search-button {
+    background: transparent;
+    color: var(--accent-color);
     border: none;
-    background: var(--accent-color);
-    color: #111111;
+    border-left: 1px solid var(--border-color);
+    border-radius: 0 12px 12px 0;
     padding: 0 1.5rem;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.4s ease;
 }
 
 #search-button:hover {
-    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.05);
+    /* Slightly darker on hover */
+    font-size: 1.15rem;
+    /* Increase font size as requested */
+    color: white;
+    /* Make text pop more */
 }
 
 /* Search Toggle */
@@ -167,10 +174,22 @@ input:checked+.slider:before {
     box-shadow: 0 8px 32px var(--shadow-color);
     z-index: 1000;
     overflow: hidden;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.55s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 500px;
-    /* Increased from 300px */
     overflow-y: auto;
+}
+
+.search-suggestions.visible {
+    display: block;
+    /* Support for JS logic that checks display, though we use visibility mostly */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .search-suggestions ul {

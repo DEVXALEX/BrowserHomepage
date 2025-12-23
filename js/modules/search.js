@@ -102,7 +102,7 @@
 
             currentFocus = -1;
             suggestionsBox.innerHTML = '';
-            suggestionsBox.style.display = 'block';
+            suggestionsBox.classList.add('visible');
             searchForm.classList.add('suggestions-open');
 
             const ul = document.createElement('ul');
@@ -145,8 +145,13 @@
 
         function closeSuggestions() {
             currentFocus = -1;
-            suggestionsBox.style.display = 'none';
-            suggestionsBox.innerHTML = '';
+            suggestionsBox.classList.remove('visible');
+            // Clear HTML after transition for cleanliness
+            setTimeout(() => {
+                if (!suggestionsBox.classList.contains('visible')) {
+                    suggestionsBox.innerHTML = '';
+                }
+            }, 550);
             searchForm.classList.remove('suggestions-open');
         }
 
