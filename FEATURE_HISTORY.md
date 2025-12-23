@@ -630,3 +630,51 @@ A fully functional **Light Theme** for the Password Manager with a distinct, vib
 - User confirmed visibility and color choices.
 
 > **[View Detailed Session Summary](../session_summary/session_2025-12-22.md)**
+
+---
+
+## 14. Password Manager Security Hardening & Bug Fixes
+**Date:** 2025-12-22 | **Time:** 20:30
+
+### 🔐 What Was Added
+A comprehensive bug-fixing and security hardening session to resolve issues introduced during theme migration and to improve vault robustness.
+
+### ✨ Features & Fixes
+- **Initialization Fix:** Restored missing script dependencies (`storage.js`, `crypto.js`, `navbar.js`) and initialization logic that were lost during file-based theme reversion.
+- **Robust Unlock Logic:**
+    - Explicit check for "Unconfigured Vault" state (no token) to prevent cryptic crashes.
+    - Improved error handling for incorrect Master Passwords (immediate feedback).
+- **Navbar Integration:** Fixed dead navigation buttons by restoring `initNavbar` calls.
+- **Tech Stack Audit:** Verified the entire Vanilla JS module structure.
+
+### 📁 Files Modified
+- **Modified:** `passwords.html`, `passwords-dark.html`, `js/modules/passwordManager.js`, `js/modules/githubSync.js`.
+
+### ✅ Verified Working
+- Navbar buttons (Home, Notes, etc.) correctly redirect.
+- "Unlock" failure now correctly reports "Incorrect Master Password".
+- Vault correctly detects and reports if sync is not yet configured.
+- Page rendering is stable across both themes.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**
+
+---
+
+## 15. Technical Documentation & Stack Audit
+**Date:** 2025-12-22 | **Time:** 21:15
+
+### 📚 What Was Added
+Detailed documentation of the project's technical architecture and modernizing the `README.md`.
+
+### ✨ Features
+- **README Overhaul:** Added a dedicated "Tech Stack" section explaining the Vanilla core, Web Crypto security, and GitHub Gist sync architecture.
+- **Spec Sync:** Verified consistency between the code and `PASSWORD_MANAGER_TECHNICAL_SPEC.md`.
+
+### 📁 Files Modified
+- **Modified:** `README.md`, `task.md`.
+
+### ✅ Verified Working
+- Tech stack is clearly communicated to future developers.
+- `README.md` now reflects the high-security "Zero-Knowledge" architecture.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**

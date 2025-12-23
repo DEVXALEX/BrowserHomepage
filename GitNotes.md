@@ -427,3 +427,23 @@ git push origin --delete branch-name
 - `git log -n 5 --stat` : View the last 5 commits with a list of modified files.
 - `git ls-files <filename>` : Check if a specific file is being tracked by Git.
 - `git diff --stat` : See a summary of currently uncommitted changes.
+
+## 13. Advanced History & Branch Investigation
+Used when you need to know "How did I get here?" or "Where did this branch start?"
+
+### Visualizing the Branch Graph
+```powershell
+git log --oneline --graph --decorate --all -n 20
+```
+*   **`--graph`**: Draws a text-based map of your branches.
+*   **`--all`**: Shows ALL branches, not just the current one.
+*   **`--decorate`**: Shows labels (like branch names) next to commits.
+*   **Why:** Essential for finding the **Parent** of a branch or seeing split-points.
+
+### Finding the Origin Story (Reflog)
+```powershell
+git reflog show <branch-name>
+```
+*   **What it does:** Shows every time your HEAD (the pointer) moved.
+*   **Why:** If you aren't sure where a branch came from, look at the last line in the reflog. It will say "checkout: moving from [parent] to [branch]".
+*   **Analogy:** The "Black Box" of your Git repository. It records everything, even if you delete a branch or a commit.
