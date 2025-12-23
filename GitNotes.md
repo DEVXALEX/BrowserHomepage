@@ -297,3 +297,153 @@ When you see `(HEAD -> main, origin/main, origin/HEAD)`, here is what it means:
 
 ### `origin/HEAD`
 *   The default branch on GitHub (usually `main`).
+
+## 9. Advanced Concepts: The "Diamond" Merge
+**Scenario:**
+1.  You made a commit locally (e.g., `docs`).
+2.  Simultaneously, a Pull Request was merged on GitHub (e.g., `mass changes`).
+3.  **Result:** Your history "Diverged". Two different features grew from the same stem.
+
+**The Fix (git pull):**
+When you ran `git pull`, Git did the following:
+1.  **Fetched** the remote changes.
+2.  **Detected** that your local branch and the remote branch had split.
+3.  **Created a "Merge Commit"**: This is a special commit that has **two parents**. It ties the two separate paths back together.
+
+**Visualizing it (The Diamond Shape):**
+```
+      A --- B  (Local Work)
+     /       \
+... D         M  (Merge Commit)
+     \       /
+      X --- Y  (Remote Work)
+```
+*   **D**: The shared, common history.
+*   **A, B**: Your local work.
+*   **X, Y**: The work done on GitHub.
+*   **M**: The "Merge Commit" that brings them all together.
+
+## 10. The "Git Pull" Logic Flow
+**User Rule:** "If I have changes and GitHub has changes, `git pull` combines them."
+
+**Is this correct?**
+**YES.** Git attempts to do this automatically.
+
+**The Process:**
+1.  **Download:** Git fetches the remote commits.
+2.  **Compare:** Git looks at your files vs. their files.
+3.  **Combine:**
+    *   **Scenario A (Clean):** They changed `header.js`, you changed `footer.js`. **Git auto-merges** and creates the new commit for you.
+    *   **Scenario B (Conflict):** You BOTH changed line 10 of `header.js`. **Git stops** and asks you to choose. ("Merge Conflict").
+
+## 11. The Panic Room (Mistake Management)
+**Scenario:** "I just messed up. How do I go back?"
+
+### Option A: The "Oops, I typed the message wrong" (Amend)
+*   **Goal:** Change the message of the LAST commit.
+*   **Command:** `git commit --amend -m "New better message"`
+*   **Condition:** You haven't pushed yet.
+
+### Option B: The "I forgot a file in the commit" (Amend)
+*   **Goal:** Add a forgotten file to the previous commit without making a new "oops" commit.
+*   **Steps:**
+    1. `git add forgotten_file.js`
+    2. `git commit --amend --no-edit`
+
+### Option C: The "Undo Button" (Soft Reset)
+*   **Goal:** Undo the commit, but **KEEP** your file changes (so you can fix them).
+*   **Command:** `git reset --soft HEAD~1`
+*   **Translation:** "Go back 1 step in history, but keep my work in the staging area."
+
+### Option D: The "Discard Changes" (Restore)
+*   **Goal:** You modified a file but hate the changes. You want the last committed version back.
+*   **Command:** `git restore filename` (for one file)
+*   **Command:** `git restore .` (for ALL files - careful!)
+*   **Translation:** "Throw away my changes to this file."
+
+### Option E: The "Unstage" (Restore Staged)
+*   **Goal:** You ran `git add`, but you didn't mean to properly stage that file yet.
+*   **Command:** `git restore --staged filename`
+*   **Translation:** "Take this file out of the staging area, but keep the changes in the file."
+
+### Option F: The "Nuke Button" (Hard Reset)
+*   **Goal:** Destroy the commit AND destroy the file changes.
+*   **Command:** `git reset --hard HEAD~1`
+*   **Translation:** "Go back 1 step and delete everything I did since then."
+
+### Option G: The "Public Undo" (Revert)
+*   **Goal:** You already **pushed** the mistake to GitHub.
+*   **Command:** `git revert <commit-hash>`
+*   **Translation:** "Make a NEW commit that does the exact opposite of the bad commit."
+*   **Why:** You never rewrite history that others might have downloaded.
+
+### 🛑 Undo Cheat Sheet
+
+| Situation | Command |
+| :--- | :--- |
+| **Changes in file are bad** | `git restore <file>` |
+| **Staged a file by mistake** | `git restore --staged <file>` |
+| **Wrong commit message** | `git commit --amend -m "..."` |
+| **Forgot to add a file** | `git add <file>` then `git commit --amend` |
+| **Undo commit, keep code** | `git reset --soft HEAD~1` |
+| **Undo commit, destroy code** | `git reset --hard HEAD~1` |
+| **Undo PUSHED commit** | `git revert <hash>` |
+
+
+
+## 12. Spring Cleaning (Deleting Branches)
+**Question:** "Is it safe to delete this branch?"
+
+### Step 1: The Safety Check
+```powershell
+git branch --merged
+```
+*   **Result:** Lists all branches that have been successfully combined into your current branch.
+*   **Verdict:** If your branch name (e.g., `feature-login`) appears in this list, it is **100% SAFE** to delete.
+
+### Step 2: Delete Locally
+```powershell
+git branch -d branch-name
+```
+*   **Note:** Use lowercase `-d`. Git will protect you. It acts like a "Are you sure?" dialog.
+*   **Force Delete:** If you try to delete an unmerged branch, Git will scream. To force it (if you truly want to trash the work), use `-D`.
+
+### Step 3: Delete from GitHub (Remote)
+```powershell
+git push origin --delete branch-name
+```
+*   **Why:** Just because you deleted it on your laptop doesn't mean it's gone from the cloud.
+
+### Troubleshooting: "Git says it's not merged!"
+*   **Error:** `error: the branch '...' is not fully merged`
+*   **Context:** This often happens after a "Diamond Merge". Git sees that your local feature branch has some "bookkeeping" history that isn't on the server, even though the **code** is safe in `main`.
+*   **The Check:** If the error says `merged to HEAD`, you are safe.
+*   **The Fix:** Use the Uppercase D (Force Delete):
+    ```powershell
+    git branch -D branch-name
+    ```
+
+### Checking History & File Tracking
+- `git log -n 5 --stat` : View the last 5 commits with a list of modified files.
+- `git ls-files <filename>` : Check if a specific file is being tracked by Git.
+- `git diff --stat` : See a summary of currently uncommitted changes.
+
+## 13. Advanced History & Branch Investigation
+Used when you need to know "How did I get here?" or "Where did this branch start?"
+
+### Visualizing the Branch Graph
+```powershell
+git log --oneline --graph --decorate --all -n 20
+```
+*   **`--graph`**: Draws a text-based map of your branches.
+*   **`--all`**: Shows ALL branches, not just the current one.
+*   **`--decorate`**: Shows labels (like branch names) next to commits.
+*   **Why:** Essential for finding the **Parent** of a branch or seeing split-points.
+
+### Finding the Origin Story (Reflog)
+```powershell
+git reflog show <branch-name>
+```
+*   **What it does:** Shows every time your HEAD (the pointer) moved.
+*   **Why:** If you aren't sure where a branch came from, look at the last line in the reflog. It will say "checkout: moving from [parent] to [branch]".
+*   **Analogy:** The "Black Box" of your Git repository. It records everything, even if you delete a branch or a commit.

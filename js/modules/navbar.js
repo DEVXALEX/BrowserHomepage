@@ -14,17 +14,33 @@
         // Map nav actions to existing sidebar buttons or functions
         switch (action) {
             case 'home':
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+                    window.location.href = 'index.html';
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                break;
+            case 'passwords':
+                // Check if we are already on a passwords page (light or dark)
+                // If not, go to default passwords page
+                if (!window.location.pathname.includes('passwords')) {
+                    window.location.href = 'passwords.html';
+                }
                 break;
             case 'calendar':
                 toggleCalendar();
                 break;
             case 'todo': // Fallthrough to notes
             case 'notes':
-                // Notes module now binds to this nav item directly
+                // If we are on ANY passwords page, redirect to index with hash
+                if (window.location.pathname.includes('passwords')) {
+                    window.location.href = 'index.html#notes';
+                }
                 break;
             case 'bookmarks':
-                // Bookmarks module now binds to this nav item directly
+                if (window.location.pathname.includes('passwords')) {
+                    window.location.href = 'index.html#bookmarks';
+                }
                 break;
             case 'bg':
                 clickIfExists('bg-toggle-btn');

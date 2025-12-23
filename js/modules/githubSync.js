@@ -28,7 +28,17 @@
                     if (parsed.iv && parsed.data && parsed.salt) {
                         // Case A: Encrypted Token
                         this.encryptedToken = parsed;
-                        this.showUnlockModal(); // Block access until PIN
+
+                        // DEBUG: Inspect Loaded Token
+                        console.log("GithubSync [INIT] Loaded Encrypted Token:", this.encryptedToken);
+                        if (this.encryptedToken.salt) {
+                            console.log("GithubSync [INIT] Salt Length:", this.encryptedToken.salt.length);
+                        } else {
+                            console.error("GithubSync [INIT] CRITICAL: Salt is MISSING in loaded token!");
+                        }
+
+                        this.updateStatus('Session Locked (Unlock in Settings)', 'normal');
+                        this.showLockedState(); // Show Unlock Button, Hide Setup
                         return;
                     }
                 } catch (e) { }
@@ -45,19 +55,31 @@
         },
 
         // Called after successful unlock or legacy load
-        finishInit: function () {
+        finishInit: async function () {
             // UI State Init
             if (this.token) {
+                // Validate/Find gist if missing
+                if (!this.gistId) {
+                    this.updateStatus('Connecting to Cloud Storage...', 'normal');
+                    try {
+                        const success = await this.findOrCreateGist();
+                        if (!success) {
+                            this.updateStatus('Cloud Storage Error', 'error');
+                            return;
+                        }
+                    } catch (e) {
+                        this.updateStatus(`Storage Error: ${e.message}`, 'error');
+                        return;
+                    }
+                }
+
                 // Restore connection state
                 if (this.lastSync) {
                     this.updateStatus(`Connected. Last Sync: ${this.lastSync}`, 'success');
                 } else {
-                    this.updateStatus('Connected', 'success');
+                    this.updateStatus('Connected & Ready', 'success');
                 }
                 this.showConnectedState();
-
-                // Validate/Find gist if missing
-                if (!this.gistId) this.findOrCreateGist();
             }
         },
 
@@ -70,7 +92,11 @@
             this.autoSyncToggle = document.getElementById('gh-autosync-toggle');
             this.statusEl = document.getElementById('gh-sync-status');
 
+            // Sidebar Badge
+            this.syncBadge = document.getElementById('main-sync-badge');
+
             this.setupBtn = document.getElementById('gh-setup-btn');
+            this.unlockSessionBtn = document.getElementById('gh-unlock-session-btn');
             this.configArea = document.getElementById('gh-config-area');
 
             // Restore Modal Elements
@@ -87,12 +113,67 @@
             this.unlockError = document.getElementById('session-error-msg');
         },
 
+        // ... [Bind Events] ...
+
+        // ... [Rest of logic] ...
+
+        updateStatus: function (msg, type = 'normal') {
+            if (this.statusEl) {
+                this.statusEl.textContent = `Status: ${msg}`;
+                this.statusEl.style.color = type === 'success' ? '#4dff88' : (type === 'error' ? '#ff4d4d' : '#888');
+            }
+
+            // Update Sidebar Badge
+            if (this.syncBadge) {
+                this.syncBadge.className = 'sync-badge'; // Reset base class
+
+                const lowerMsg = msg.toLowerCase();
+
+                // 1. Error State
+                if (type === 'error') {
+                    this.syncBadge.classList.add('error');
+                    this.syncBadge.title = `Sync Error: ${msg}`;
+                    return;
+                }
+
+                // 2. Active Syncing
+                if (lowerMsg.includes('syncing') || lowerMsg.includes('encrypting') || lowerMsg.includes('connecting')) {
+                    this.syncBadge.classList.add('syncing');
+                    this.syncBadge.title = msg;
+                    return;
+                }
+
+                // 3. Explicit Success or Connected Message
+                if (type === 'success' || lowerMsg.includes('connected')) {
+                    this.syncBadge.classList.add('connected');
+                    this.syncBadge.title = `Cloud Connected: ${msg}`;
+                    return;
+                }
+
+                // 4. Idle/Normal State - Check actual Token existence AND Gist Connection
+                // If we have a token AND a gistId, we are effectively "connected".
+                if (this.token && this.gistId && !lowerMsg.includes('locked')) {
+                    this.syncBadge.classList.add('connected');
+                    this.syncBadge.title = "Cloud Connected & Idle";
+                } else {
+                    // Default Grey (Locked, Offline, or No Gist)
+                    this.syncBadge.title = msg || "Offline";
+                }
+            }
+        },
+
         bindEvents: function () {
             // ... Standard Events ...
             if (this.setupBtn) {
                 this.setupBtn.addEventListener('click', () => {
                     this.setupBtn.style.display = 'none';
                     if (this.configArea) this.configArea.style.display = 'block';
+                });
+            }
+
+            if (this.unlockSessionBtn) {
+                this.unlockSessionBtn.addEventListener('click', () => {
+                    this.showUnlockModal();
                 });
             }
 
@@ -132,16 +213,29 @@
                 });
             }
 
-            // Restore Modal Logic
-            if (this.restoreConfirmBtn) {
-                this.restoreConfirmBtn.addEventListener('click', () => this.applyRestore());
-            }
-            if (this.restoreCancelBtn) {
-                this.restoreCancelBtn.addEventListener('click', () => this.closeRestoreModal());
-            }
             if (this.restoreModal) {
                 this.restoreModal.addEventListener('click', (e) => {
                     if (e.target === this.restoreModal) this.closeRestoreModal();
+                });
+            }
+
+            // Sync Badge Click
+            if (this.syncBadge) {
+                this.syncBadge.addEventListener('click', () => {
+                    if (this.token) {
+                        // Connected: Trigger Sync
+                        this.syncUp(true);
+                    } else if (this.encryptedToken) {
+                        // Locked: Prompt PIN
+                        this.showUnlockModal();
+                    } else {
+                        // Not Configured: Open Settings
+                        // We need a way to open settings modal from here.
+                        // The settings button does: document.getElementById('settings-modal').classList.add('visible');
+                        // Let's just emulate that or use a global helper if available.
+                        const settingsModal = document.getElementById('settings-modal');
+                        if (settingsModal) settingsModal.classList.add('visible');
+                    }
                 });
             }
 
@@ -181,7 +275,13 @@
                 // to not save state yet.
                 // Actually, let's just Prompt for PIN FIRST.
 
-                const pin = prompt("🔐 Create a Master PIN to secure this token:\n(You will need this PIN every time you restart the browser)", "");
+                let pin = prompt("🔐 Create a Master PIN to secure this token:\n(You will need this PIN every time you restart the browser)", "");
+                if (pin) pin = pin.trim();
+
+                // DEBUG: Log Hex of PIN to compare
+                const pinHex = Array.from(new TextEncoder().encode(pin)).map(b => b.toString(16).padStart(2, '0')).join('');
+                console.log("GithubSync [SETUP] PIN Hex:", pinHex);
+
                 if (!pin || pin.length < 4) {
                     alert("Connection Cancelled. PIN must be at least 4 digits.");
                     this.updateStatus('Setup Cancelled');
@@ -192,8 +292,25 @@
                 this.updateStatus('Encrypting...');
                 const encrypted = await app.Crypto.encryptData(token, pin);
 
+                // --- VERIFICATION STEP (Added to catch immediate failures) ---
+                try {
+                    console.log("GithubSync: Verifying encryption...");
+                    const check = await app.Crypto.decryptData(encrypted, pin);
+                    if (check !== token) throw new Error("Verification Mismatch");
+                    console.log("GithubSync: Encryption verified successfully.");
+                } catch (verifyError) {
+                    console.error("GithubSync: CRITICAL - Encryption Verification Failed!", verifyError);
+                    alert("Security Check Failed!\nThe system could not verify your PIN immediately after setting it.\n\nPlease try a different PIN or check your browser security settings.");
+                    this.updateStatus('Error: Encryption Verification Failed', 'error');
+                    return;
+                }
+                // -------------------------------------------------------------
+
                 // 3. Save Encrypted Token
                 app.Storage.setString('gh_token', JSON.stringify(encrypted));
+
+                console.log("GithubSync [SETUP] Saved Encrypted Token:", encrypted);
+                console.log("GithubSync [SETUP] Salt:", encrypted.salt);
 
                 // 4. Set Memory State
                 this.token = token;
@@ -214,7 +331,9 @@
             }
         },
 
-        showUnlockModal: function () {
+        // onUnlockCallback: function(pin) {}
+        showUnlockModal: function (onUnlockCallback = null) {
+            this.pendingUnlockCallback = onUnlockCallback; // Store callback
             if (this.unlockModal) {
                 this.unlockModal.classList.add('visible');
                 if (this.unlockPinInput) {
@@ -224,32 +343,60 @@
             }
         },
 
+        // UI Event Handler
         handleUnlock: async function () {
-            const pin = this.unlockPinInput.value;
-            if (!this.encryptedToken || !pin) return;
+            let pin = this.unlockPinInput.value;
+            if (pin) pin = pin.trim();
+
+            // DEBUG: Log Hex of PIN
+            if (pin) {
+                const pinHex = Array.from(new TextEncoder().encode(pin)).map(b => b.toString(16).padStart(2, '0')).join('');
+                console.log("GithubSync [UNLOCK] PIN Hex:", pinHex);
+            }
+            if (!pin) return;
 
             this.unlockBtn.textContent = 'Decrypting...';
             this.unlockError.textContent = '';
 
-            try {
-                const decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin);
+            const success = await this.tryUnlock(pin);
 
-                // Verify it looks like a token?
-                if (!decryptedToken || !decryptedToken.startsWith('gh')) {
-                    // Soft check. 
-                }
+            this.unlockBtn.textContent = 'Unlock';
 
-                this.token = decryptedToken;
+            if (success) {
                 this.unlockModal.classList.remove('visible');
-                this.finishInit(); // Resume init
-
-            } catch (e) {
-                console.error("Unlock failed", e);
+                // Callback handled in tryUnlock or here? 
+                // tryUnlock handles finishInit.
+                // handleUnlock logic for callbacks specific to UI modal:
+                if (this.pendingUnlockCallback) {
+                    this.pendingUnlockCallback(pin);
+                    this.pendingUnlockCallback = null;
+                }
+            } else {
                 this.unlockError.textContent = 'Incorrect PIN';
-            } finally {
-                this.unlockBtn.textContent = 'Unlock';
             }
         },
+
+        // Programmatic Unlock
+        tryUnlock: async function (pin) {
+            if (!this.encryptedToken || !pin) return false;
+
+            try {
+                // 1. Try New Standard (600k)
+                // console.log("GithubSync: Attempting token unlock with 600k...");
+                let decryptedToken = await app.Crypto.decryptData(this.encryptedToken, pin, 600000);
+
+                this.token = decryptedToken;
+                this.finishInit();
+                return true;
+
+            } catch (e1) {
+                console.warn("GithubSync: Token unlock 600k failed.");
+                console.error(e1);
+                return false;
+            }
+        },
+
+
 
         checkForBackup: async function () {
             try {
@@ -273,6 +420,7 @@
 
         showSetupState: function () {
             if (this.setupBtn) this.setupBtn.style.display = 'block';
+            if (this.unlockSessionBtn) this.unlockSessionBtn.style.display = 'none';
             if (this.configArea) this.configArea.style.display = 'none';
             if (this.manualSyncBtn) this.manualSyncBtn.style.display = 'none';
             if (this.restoreBtn) this.restoreBtn.style.display = 'none';
@@ -282,8 +430,18 @@
             if (this.tokenInput) this.tokenInput.value = '';
         },
 
+        showLockedState: function () {
+            if (this.setupBtn) this.setupBtn.style.display = 'none';
+            if (this.unlockSessionBtn) this.unlockSessionBtn.style.display = 'block';
+            if (this.configArea) this.configArea.style.display = 'none';
+            if (this.manualSyncBtn) this.manualSyncBtn.style.display = 'none';
+            if (this.restoreBtn) this.restoreBtn.style.display = 'none';
+            if (this.editBtn) this.editBtn.style.display = 'none';
+        },
+
         showConnectedState: function () {
             if (this.setupBtn) this.setupBtn.style.display = 'none';
+            if (this.unlockSessionBtn) this.unlockSessionBtn.style.display = 'none';
             if (this.configArea) this.configArea.style.display = 'none';
 
             if (this.manualSyncBtn) {
@@ -377,6 +535,7 @@
                     },
                     body: JSON.stringify({
                         files: {
+                            // ISOLATION POLICY: Only touch 'dashboard_backup.json'. NEVER include 'locker.enc'.
                             [GIST_FILENAME]: { content: JSON.stringify(data, null, 2) }
                         }
                     })
@@ -528,12 +687,7 @@
             };
         },
 
-        updateStatus: function (msg, type = 'normal') {
-            if (this.statusEl) {
-                this.statusEl.textContent = `Status: ${msg}`;
-                this.statusEl.style.color = type === 'success' ? '#4dff88' : (type === 'error' ? '#ff4d4d' : '#888');
-            }
-        },
+
 
         enableControls: function () {
             if (this.manualSyncBtn) this.manualSyncBtn.disabled = false;

@@ -232,10 +232,13 @@ A fully functional calculator with keyboard support.
   - Backspace/delete
   - Clear (C) button
   
-- **Display**:
-  - Expression history
-  - Result display
-  - Auto-formatting (4 decimals, removes trailing zeros)
+- **[2.1]** Search Bar Refinement (2025-12-19)
+    - **Fixes:** Clears input on search, Auto-focus, 100ms Debounce.
+    - **Status:** Merged to `main` (PR #2).
+
+- **[2.2]** Repository Sync (2025-12-20)
+    - **Action:** Merged remote `mass changes` into local `docs`.
+    - **Status:** Synced.
 
 - **Keyboard Support**:
   - Numbers: `0-9`
@@ -473,9 +476,34 @@ implemented a "Secure Vault" architecture to encrypt sensitive data (GitHub Toke
 - Sync works correctly after PIN entry.
 - Locker secrets can still be decrypted (using shared module).
 
-> **[View Detailed Session Summary](session_summary/session_2025-12-18.md)**
+> **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
 
+---
 
+## 13. Password Manager Light Theme (Dedicated Page)
+**Date:** 2025-12-22 | **Time:** 11:00
+
+### 🎨 What Was Added
+Implemented a dedicated **Light Theme** for the Password Manager, accessible via a toggle button.
+
+### ✨ Features
+- **Separate HTML Page:** Created `passwords-light.html` to guarantee clean styling without CSS conflicts.
+- **Theme Toggle:** Sun/Moon icon toggle navigates seamlessly between Dark and Light versions.
+- **Visual Design:** High-contrast White/Orange theme for better readability in bright environments.
+- **Persistence:** Uses URL-based persistence (different pages) rather than fragile local storage state.
+
+### 📁 Files Modified
+- **Created:** `passwords-light.html`, `css/pages/passwords-light.css`
+- **Modified:** `passwords.html` (Added toggle link, cleaned up JS/CSS refs)
+- **Cleaned:** `js/modules/passwordManager.js`, `css/pages/passwords.css` (Removed failed dynamic toggle logic)
+
+### ✅ Verified Working
+- Dark Mode is default.
+- Clicking Sun icon loads Light Mode page instantly.
+- Clicking Moon icon returns to Dark Mode.
+- All Password Manager features (Unlock, Search, Edit) work on both pages.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**
 ---
 
 ## 10. Search Bar Improvements
@@ -538,3 +566,115 @@ A comprehensive interface cleanup focusing on simplifying navigation and improvi
 - Navbar buttons trigger correct modals.
 
 > **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
+
+---
+
+## 12. Password Manager Refinements & Inline Unlock
+**Date:** 2025-12-20 | **Time:** 23:30
+
+### 🔐 What Was Added
+Refined the Password Manager with a "Locked Focus Mode" and smoother inline unlocking.
+
+### ✨ Features
+- **Locked Mode Visibility:** When locked, the sidebar (search, filters, logo) and header are hidden, focusing attention solely on the unlock screen.
+- **Inline Unlock:** Replaced the modal popup with a clean, inline PIN input field directly on the locked view.
+- **UI Polish:** 
+  - Added visual underline to the active "Passwords" navbar link.
+  - Converted "Lock Vault" sidebar button to a larger, centered icon-only button.
+  - Removed unwanted gaps in the layout.
+
+### 📁 Files Modified
+- **JS:** 
+  - `locker.js`: Updated to return boolean status (Success/Fail) for headless unlocking; added null checks.
+  - `passwordManager.js`: Implemented `handleInlineUnlock` and `renderLockedState` logic; removed modal dependency.
+  - `githubSync.js`: Fixed duplicate function causing sync badge issues.
+- **CSS:** `passwords.css`: Added `.locked-mode` styles to hide sidebar/header; styled inline PIN input.
+- **HTML:** `passwords.html`: Updated locked section structure.
+
+### 🐛 Bugs Fixed
+- **Unlock Failure:** Fixed communication breakdown between `locker.js` (which was returning void) and `passwordManager.js` (which expected boolean).
+- **Sync Badge**: Deleted duplicate `updateStatus` method that was preventing the cloud sync badge from updating.
+
+### ✅ Verified Working
+- Vault locks and hides sidebar/header navigation.
+- Inline PIN entry correctly unlocks the vault and restores the full dashboard.
+- Active link in navbar is clearly visible.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-20.md)**
+
+
+## 13. Password Manager Light Theme & UI Refinements
+**Date:** 2025-12-22 | **Time:** 13:45
+
+### 🎨 What Was Added
+A fully functional **Light Theme** for the Password Manager with a distinct, vibrant "Orange" aesthetic and significant UI layout improvements.
+
+### ✨ Features
+- **Standalone Light Theme:** Created `passwords-light.html` for a clean separation of themes.
+- **Orange Palette:** Implemented a new design system using shades of orange (Deep Burnt Orange text, Light Cream backgrounds).
+- **Masking Upgrade:** All passwords now display as **10 Orange Dots** (`••••••••••`) regardless of length to improve security privacy.
+- **Card Design:** 
+  - **Darker Orange** borders and accents.
+  - **Cream Background** for cards with a **White Cutout** for the password field.
+- **Layout Fixes:** Unified grid structure to prevent clipping and wasted screen space.
+
+### 📁 Files Modified
+- **HTML:** `passwords-light.html` (New), `passwords.html`.
+- **CSS:** `css/pages/passwords-light.css` (New), `css/pages/passwords.css`.
+- **JS:** `js/modules/passwordManager.js` (Fixed masking logic).
+
+### ✅ Verified Working
+- Light Theme is visually distinct and vibrant.
+- Passwords are securely masked with uniform length.
+- Layout is consistent across both Dark and Light themes.
+- User confirmed visibility and color choices.
+
+> **[View Detailed Session Summary](../session_summary/session_2025-12-22.md)**
+
+---
+
+## 14. Password Manager Security Hardening & Bug Fixes
+**Date:** 2025-12-22 | **Time:** 20:30
+
+### 🔐 What Was Added
+A comprehensive bug-fixing and security hardening session to resolve issues introduced during theme migration and to improve vault robustness.
+
+### ✨ Features & Fixes
+- **Initialization Fix:** Restored missing script dependencies (`storage.js`, `crypto.js`, `navbar.js`) and initialization logic that were lost during file-based theme reversion.
+- **Robust Unlock Logic:**
+    - Explicit check for "Unconfigured Vault" state (no token) to prevent cryptic crashes.
+    - Improved error handling for incorrect Master Passwords (immediate feedback).
+- **Navbar Integration:** Fixed dead navigation buttons by restoring `initNavbar` calls.
+- **Tech Stack Audit:** Verified the entire Vanilla JS module structure.
+
+### 📁 Files Modified
+- **Modified:** `passwords.html`, `passwords-dark.html`, `js/modules/passwordManager.js`, `js/modules/githubSync.js`.
+
+### ✅ Verified Working
+- Navbar buttons (Home, Notes, etc.) correctly redirect.
+- "Unlock" failure now correctly reports "Incorrect Master Password".
+- Vault correctly detects and reports if sync is not yet configured.
+- Page rendering is stable across both themes.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**
+
+---
+
+## 15. Technical Documentation & Stack Audit
+**Date:** 2025-12-22 | **Time:** 21:15
+
+### 📚 What Was Added
+Detailed documentation of the project's technical architecture and modernizing the `README.md`.
+
+### ✨ Features
+- **README Overhaul:** Added a dedicated "Tech Stack" section explaining the Vanilla core, Web Crypto security, and GitHub Gist sync architecture.
+- **Spec Sync:** Verified consistency between the code and `PASSWORD_MANAGER_TECHNICAL_SPEC.md`.
+
+### 📁 Files Modified
+- **Modified:** `README.md`, `task.md`.
+
+### ✅ Verified Working
+- Tech stack is clearly communicated to future developers.
+- `README.md` now reflects the high-security "Zero-Knowledge" architecture.
+
+> **[View Detailed Session Summary](session_summary/session_2025-12-22.md)**

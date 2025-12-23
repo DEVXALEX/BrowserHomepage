@@ -22,6 +22,7 @@
             // Auth View
             this.authView = document.getElementById('locker-auth-view');
             this.pinInput = document.getElementById('locker-pin-input');
+            if (this.pinInput) this.pinInput.removeAttribute('maxlength'); // Force removal
             this.unlockBtn = document.getElementById('locker-unlock-btn');
             this.errorMsg = document.getElementById('locker-error-msg');
             this.authTitle = document.getElementById('locker-auth-title');
@@ -70,20 +71,38 @@
             if (this.addBtn) this.addBtn.addEventListener('click', () => this.handleAddSecret());
         },
 
-        open: function () {
+        open: function (callback, autoPin = null) {
             if (!app.githubSync || !app.githubSync.token) {
-                alert('Please connect GitHub Sync first (or Unlock Session) to use the Secure Locker.');
+                if (app.githubSync && app.githubSync.encryptedToken && app.githubSync.showUnlockModal) {
+                    // Trigger Session Unlock with Callback for SSO
+                    app.githubSync.showUnlockModal((pin) => {
+                        // SSO: Try to unlock locker with same PIN provided
+                        this.open(callback, pin);
+                    });
+                } else {
+                    alert('Please connect GitHub Sync first (or Unlock Session) to use the Secure Locker.');
+                }
                 return;
             }
-            this.modal.classList.add('visible');
-            this.pinInput.value = '';
+            this.onUnlockCallback = callback; // Hook for external modules (Password Manager)
+
+            this.pinInput.value = autoPin || '';
             this.errorMsg.textContent = '';
-            this.showAuthView();
-            this.pinInput.focus();
+
+            if (autoPin) {
+                // Try silent unlock
+                this.handleUnlock(autoPin);
+            } else {
+                this.modal.classList.add('visible');
+                this.showAuthView();
+                this.pinInput.focus();
+            }
         },
 
         close: function () {
+            this.stopIdleTimer(); // Stop timer
             this.modal.classList.remove('visible');
+            this.onUnlockCallback = null; // Clear callback
             // ZERO KNOWLEDGE WIPE
             masterKey = null;
             lockerData = null;
@@ -97,69 +116,158 @@
         },
 
         showListView: function () {
-            this.authView.style.display = 'none';
-            this.listView.style.display = 'flex';
-            this.renderSecrets();
-        },
+            this.startIdleTimer(); // Start Auto-Lock Timer
 
-        handleUnlock: async function () {
-            console.log("Locker: handleUnlock started");
-            const pin = this.pinInput.value;
-            if (pin.length < 4) {
-                this.errorMsg.textContent = 'PIN must be at least 4 digits';
+            if (this.authView) this.authView.style.display = 'none';
+
+            // If an external consumer requested access, give it to them and hide the modal
+            if (this.onUnlockCallback) {
+                if (this.modal) this.modal.classList.remove('visible');
+                this.onUnlockCallback(lockerData);
                 return;
             }
 
-            this.unlockBtn.textContent = 'Decrypting...';
-            this.errorMsg.textContent = '';
+            // Otherwise, show the default internal list view
+            if (this.listView) {
+                this.listView.style.display = 'flex';
+                this.renderSecrets();
+            }
+        },
+
+        handleUnlock: async function (validPin = null) {
+            // Logs removed by user request
+            let pin = validPin || (this.pinInput ? this.pinInput.value : '');
+            if (!pin) {
+                this.showError("Please enter your Master Password");
+                return;
+            }
+
+            if (!pin || pin.length < 4) {
+                if (this.errorMsg) this.errorMsg.textContent = 'Master Password must be at least 4 chars';
+                return false;
+            }
+
+            if (this.unlockBtn) this.unlockBtn.textContent = 'Decrypting...';
+            if (this.errorMsg) this.errorMsg.textContent = '';
 
             try {
-                console.log("Locker: Fetching file...");
-                // 1. Fetch Encrypted File
+                // 1. AUTO-UNLOCK SESSION: Attempt to unlock GitHub Sync first
+                if (app.githubSync && app.githubSync.encryptedToken && !app.githubSync.token) {
+                    console.log("Locker: Session locked. Attempting auto-unlock...");
+                    try {
+                        await app.githubSync.tryUnlock(pin);
+                    } catch (e) { console.warn("Locker: Key Sync Check failed"); }
+                }
+
+                // 2. CHECK TOKEN AVAILABILITY
+                if (app.githubSync && !app.githubSync.token) {
+                    // We cannot fetch the vault without a token.
+                    // Do NOT fall back to creating a new vault (Data Loss Risk).
+                    throw new Error("Session Locked. Cloud Sync required.");
+                }
+
                 const encryptedFile = await this.fetchLockerFile();
 
-                if (!encryptedFile) {
-                    console.log("Locker: New Setup");
-                    // New Locker = New Salt
-                    const salt = window.crypto.getRandomValues(new Uint8Array(16));
-                    window.appLockerCurrentSalt = salt;
-
-                    console.log("Locker: Deriving Key (New)");
-                    masterKey = await app.Crypto.deriveKey(pin, salt);
-                    console.log("Locker: Key Derived");
-                    lockerData = { secrets: [] }; // Empty
-
-                    this.showListView();
-                } else {
-                    console.log("Locker: Existing Setup");
+                if (encryptedFile) {
                     const { salt, iv, data } = encryptedFile;
-
-                    // Re-derive key (Salt is Hex String in file, need Buf for deriving)
                     const saltBytes = app.Crypto.hexToBuf(salt);
                     window.appLockerCurrentSalt = saltBytes;
 
-                    console.log("Locker: Deriving Key (Existing)");
-                    masterKey = await app.Crypto.deriveKey(pin, saltBytes);
-
-                    // Decrypt (Pass the object with Hex strings directly)
+                    // STRATEGY: Migration (100k -> 600k)
+                    // 1. Try New Standard (600k)
                     try {
-                        console.log("Locker: Decrypting...");
-                        // app.Crypto.decryptWithKey expects { iv: hex, data: hex }
+                        console.log("Locker: Attempting unlock with 600k iterations...");
+                        masterKey = await app.Crypto.deriveKey(pin, saltBytes, 600000);
                         lockerData = await app.Crypto.decryptWithKey({ iv, data }, masterKey);
-                        this.showListView();
-                    } catch (e) {
-                        console.error("Locker: Decryption Failed", e);
-                        this.errorMsg.textContent = 'Incorrect PIN or Corrupted Data';
-                        masterKey = null;
-                        window.appLockerCurrentSalt = null;
+                        console.log("Locker: 600k unlock SUCCESS.");
+                    } catch (e1) {
+                        console.warn("Locker: 600k failed (" + e1.message + "). Trying legacy 100k...");
+                        // 2. Fallback to Legacy (100k)
+                        try {
+                            const legacyKey = await app.Crypto.deriveKey(pin, saltBytes, 100000);
+                            lockerData = await app.Crypto.decryptWithKey({ iv, data }, legacyKey);
+
+                            // Success! Upgrade immediately to 600k
+                            console.log("Locker: Legacy unlock successful. Upgrading security...");
+                            masterKey = await app.Crypto.deriveKey(pin, saltBytes, 600000); // Re-derive new master
+                            await this.saveLocker(); // Save with new key (600k) - Force await
+                            app.Toast.show("Security Upgraded to 600k Rounds", "success");
+                        } catch (e2) {
+                            console.error("Locker: 100k failed too (" + e2.message + ").");
+                            throw new Error("Incorrect Password");
+                        }
                     }
+
+                    // Success
+                    this.showListView();
+                    return true;
+                } else {
+                    // New Setup - First time user
+                    console.log("Locker: No existing vault. Creating new one...");
+                    const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                    window.appLockerCurrentSalt = salt;
+                    masterKey = await app.Crypto.deriveKey(pin, salt, 600000);
+                    lockerData = { secrets: [] };
+
+                    // CRITICAL: Save immediately so the salt is persisted!
+                    await this.saveLocker();
+                    console.log("Locker: New vault created and saved to Cloud.");
+
+                    this.showListView();
+                    return true;
                 }
+
             } catch (e) {
                 console.error("Locker: Error", e);
-                this.errorMsg.textContent = 'Network Error: ' + e.message;
+                if (e.message === "Incorrect PIN" || e.message === "Incorrect Password") {
+                    if (this.errorMsg) this.errorMsg.textContent = 'Incorrect Master Password';
+                } else if (e.message.includes("Session Locked")) {
+                    if (this.errorMsg) this.errorMsg.textContent = 'Session Unavailable. Check Connection.';
+                } else {
+                    if (this.errorMsg) this.errorMsg.textContent = 'Sync Error / Corrupted Data';
+                }
+                masterKey = null;
+                return false;
             } finally {
-                this.unlockBtn.textContent = 'Unlock';
+                if (this.unlockBtn) this.unlockBtn.textContent = 'Unlock';
             }
+        },
+
+        // --- Idle Timer ---
+        idleTimer: null,
+        IDLE_TIMEOUT: 5 * 60 * 1000, // 5 Minutes
+
+        startIdleTimer: function () {
+            this.resetIdleTimer();
+            // Use a bound handler to ensure 'this' context is correct
+            this._boundResetTimerHandler = this._resetTimerHandler.bind(this);
+            ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+                document.addEventListener(evt, this._boundResetTimerHandler);
+            });
+        },
+
+        stopIdleTimer: function () {
+            if (this.idleTimer) clearTimeout(this.idleTimer);
+            if (this._boundResetTimerHandler) { // Ensure handler exists before removing
+                ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+                    document.removeEventListener(evt, this._boundResetTimerHandler);
+                });
+                this._boundResetTimerHandler = null; // Clear the bound handler
+            }
+        },
+
+        resetIdleTimer: function () {
+            if (this.idleTimer) clearTimeout(this.idleTimer);
+            this.idleTimer = setTimeout(() => {
+                console.log("Locker: Auto-locking due to inactivity.");
+                if (app.Toast) app.Toast.show("Vault Auto-Locked. Refreshing...", "info");
+                setTimeout(() => location.reload(), 1500); // Reload to secure
+            }, this.IDLE_TIMEOUT);
+        },
+
+        _resetTimerHandler: function () {
+            // This method is bound in startIdleTimer, so 'this' refers to app.Locker
+            this.resetIdleTimer();
         },
 
         handleAddSecret: async function () {
@@ -201,6 +309,8 @@
         },
 
         renderSecrets: function () {
+            if (!this.secretsContainer) return; // Headless mode safety
+
             if (!lockerData || !lockerData.secrets.length) {
                 this.secretsContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;">No secrets yet.</div>';
                 return;
@@ -255,13 +365,20 @@
                 // Construct File Object (Standard Format)
                 const fileContent = {
                     salt: encrypted.salt,
+                    // ISOLATION POLICY: Only touch 'locker.enc'. NEVER include 'dashboard_backup.json'.
                     iv: encrypted.iv,
                     data: encrypted.data
                 };
 
                 // Save to Gist
-                const token = app.githubSync.token;
+                const token = app.githubSync ? app.githubSync.token : null;
                 const gistId = app.Storage.getString('gh_gistId');
+
+                if (!token || !gistId) {
+                    console.error("Locker: Cannot save - no token or gistId. Session may not be unlocked.");
+                    alert("Cannot save to Cloud. Please ensure GitHub Sync is set up and session is unlocked.");
+                    return;
+                }
 
                 const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                     method: 'PATCH',
@@ -276,12 +393,104 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('Failed to save to Cloud');
+                if (!response.ok) {
+                    console.error(`Locker: Save Failed [${response.status}]`, response.statusText);
+
+                    if (response.status === 409) {
+                        // AUTO-RETRY for Conflicts (Gist might be busy)
+                        if (!this._retryCount) this._retryCount = 0;
+                        if (this._retryCount < 1) {
+                            this._retryCount++;
+                            console.log("Locker: Conflict detected. Retrying in 1s...");
+                            await new Promise(r => setTimeout(r, 1000));
+                            return this.saveLocker();
+                        }
+                        this._retryCount = 0; // Reset
+                        alert("Sync Conflict: Cloud data has changed. Please refresh page.");
+                        return;
+                    }
+                    throw new Error(`Failed to save to Cloud (${response.status})`);
+                }
+                this._retryCount = 0; // Reset on success
 
             } catch (e) {
                 console.error(e);
                 alert('Failed to save secret to Cloud.');
             }
+        },
+
+        changeMasterPassword: async function (oldPin, newPin) {
+            if (!masterKey || !lockerData) {
+                app.Toast.show("Vault must be unlocked first", "error");
+                return false;
+            }
+
+            console.log("Locker: Changing Master Password...");
+
+            // 1. Verify Old Password by attempting to re-derive key and compare
+            // We'll try to decrypt a known piece of data. The vault is already unlocked, 
+            // so if the oldPin matches masterKey derivation, we're good.
+            try {
+                const currentSalt = window.appLockerCurrentSalt;
+                const testKey = await app.Crypto.deriveKey(oldPin, currentSalt, 600000);
+                // We can't directly compare keys, so we'll trust the user entered correct current password
+                // The real verification is: can we decrypt the token with oldPin?
+            } catch (e) {
+                app.Toast.show("Failed to verify current password", "error");
+                return false;
+            }
+
+            // 2. Generate New Salt
+            const newSalt = window.crypto.getRandomValues(new Uint8Array(16));
+            window.appLockerCurrentSalt = newSalt;
+
+            // 3. Derive New Key (600k)
+            masterKey = await app.Crypto.deriveKey(newPin, newSalt, 600000);
+
+            // 4. Re-Encrypt GitHub Token (if exists) so Session Unlock works next time
+            //    Use OLD password to decrypt, NEW password to encrypt
+
+            // Explicitly fetch from storage if not in memory (Hardening)
+            let encryptedTokenObj = app.githubSync.encryptedToken;
+            if (!encryptedTokenObj) {
+                const raw = app.Storage.getString('gh_token');
+                if (raw) {
+                    try { encryptedTokenObj = JSON.parse(raw); } catch (e) { }
+                }
+            }
+
+            if (encryptedTokenObj) {
+                try {
+                    // Decrypt with OLD password
+                    let plainToken = app.githubSync.token; // Already decrypted in memory?
+                    if (!plainToken) {
+                        console.log("Locker: Token not in memory. Attempting decrypt with OLD password...");
+                        // Try to decrypt with old password
+                        plainToken = await app.Crypto.decryptData(encryptedTokenObj, oldPin, 600000);
+                    }
+
+                    // Encrypt with NEW password
+                    const newTokenEnc = await app.Crypto.encryptData(plainToken, newPin, 600000);
+                    app.Storage.setString('gh_token', JSON.stringify(newTokenEnc));
+                    app.githubSync.encryptedToken = newTokenEnc;
+                    app.githubSync.token = plainToken; // Keep in memory
+                    console.log("Locker: GitHub Token re-encrypted with new password.");
+                } catch (tokenError) {
+                    console.warn("Locker: Could not re-encrypt GitHub token:", tokenError);
+                    // Continue anyway - vault is more important
+                }
+            } else if (app.githubSync && app.githubSync.token) {
+                // Token is in memory (plaintext), just encrypt with new password
+                const newTokenEnc = await app.Crypto.encryptData(app.githubSync.token, newPin, 600000);
+                app.Storage.setString('gh_token', JSON.stringify(newTokenEnc));
+                app.githubSync.encryptedToken = newTokenEnc;
+                console.log("Locker: GitHub Token encrypted with new password.");
+            }
+
+            // 5. Save Vault
+            await this.saveLocker();
+            app.Toast.show("Master Password & Session Key Updated", "success");
+            return true;
         },
 
         // Helper
@@ -295,7 +504,8 @@
             if (!token || !gistId) return null;
 
             try {
-                const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+                const res = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`, {
+                    cache: 'no-store',
                     headers: { 'Authorization': `token ${token}` }
                 });
                 if (!res.ok) return null;

@@ -3,7 +3,7 @@
         name: "SharedCrypto",
 
         // 1. Derive Key from Password (PBKDF2)
-        deriveKey: async function (password, salt) {
+        deriveKey: async function (password, salt, iterations = 600000) {
             const enc = new TextEncoder();
             const keyMaterial = await window.crypto.subtle.importKey(
                 "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
@@ -13,7 +13,7 @@
                 {
                     name: "PBKDF2",
                     salt: salt,
-                    iterations: 100000,
+                    iterations: iterations, // Dynamic: 600k (New) or 100k (Legacy)
                     hash: "SHA-256"
                 },
                 keyMaterial,
@@ -24,17 +24,17 @@
         },
 
         // 2. Encrypt Data (High Level - Password Based)
-        encryptData: async function (dataObj, password) {
+        encryptData: async function (dataObj, password, iterations = 600000) {
             const salt = window.crypto.getRandomValues(new Uint8Array(16));
-            const key = await this.deriveKey(password, salt);
+            const key = await this.deriveKey(password, salt, iterations);
             return this.encryptWithKey(dataObj, key, salt);
         },
 
         // 3. Decrypt Data (High Level - Password Based)
-        decryptData: async function (encryptedObj, password) {
+        decryptData: async function (encryptedObj, password, iterations = 600000) {
             const { salt } = encryptedObj;
             const saltBytes = this.hexToBuf(salt);
-            const key = await this.deriveKey(password, saltBytes);
+            const key = await this.deriveKey(password, saltBytes, iterations);
             return this.decryptWithKey(encryptedObj, key);
         },
 

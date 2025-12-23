@@ -1,0 +1,57 @@
+/* Sync Badge in Sidebar */
+.sync-badge {
+    margin-top: auto;
+    /* Push to bottom */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #555;
+    /* Default / Offline */
+    transition: all 0.3s;
+    font-size: 1.1rem;
+    cursor: help;
+}
+
+.sync-badge.connected {
+    color: #4dff88;
+    background: rgba(77, 255, 136, 0.1);
+    /* Subtle glow for connected */
+}
+
+.sync-badge.syncing {
+    color: #4dff88;
+    animation: pulse-sync 1.5s infinite;
+}
+
+.sync-badge.syncing i {
+    animation: spin-cloud 2s linear infinite;
+    /* Or change icon to spinner */
+}
+
+.sync-badge.success {
+    color: #4dff88;
+}
+
+.sync-badge.error {
+    color: #ff4d4d;
+}
+
+@keyframes pulse-sync {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
