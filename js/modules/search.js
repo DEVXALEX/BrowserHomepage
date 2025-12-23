@@ -29,18 +29,32 @@
             isGeminiMode = isGemini;
             searchToggleSwitch.checked = isGemini;
 
-            if (isGemini) {
-                searchInput.placeholder = 'Ask Gemini (text will be copied)...';
-                searchForm.action = 'https://gemini.google.com/';
-                searchInput.name = '';
-                searchModeIcon.innerHTML = '<img src="gemini_sparkle.png" class="gemini-img-icon" alt="Gemini">';
-                closeSuggestions();
-            } else {
-                searchInput.placeholder = 'Search Google...';
-                searchForm.action = 'https://www.google.com/search';
-                searchInput.name = 'q';
-                searchModeIcon.innerHTML = '<i class="fa-brands fa-google"></i>';
-            }
+            // Trigger Animation
+            searchModeIcon.classList.add('animating');
+            setTimeout(() => {
+                if (isGemini) {
+                    searchInput.placeholder = 'Ask Gemini (text will be copied)...';
+                    searchForm.action = 'https://gemini.google.com/';
+                    searchInput.name = '';
+                    searchModeIcon.innerHTML = '<img src="gemini_sparkle.png" class="gemini-img-icon" alt="Gemini">';
+                    searchModeIcon.classList.add('gemini-icon');
+                    closeSuggestions();
+                } else {
+                    searchInput.placeholder = 'Search Google...';
+                    searchForm.action = 'https://www.google.com/search';
+                    searchInput.name = 'q';
+                    searchModeIcon.innerHTML = '<i class="fa-brands fa-google"></i>';
+                    searchModeIcon.classList.remove('gemini-icon');
+                }
+
+                // Refresh focus color if active
+                if (document.activeElement === searchInput) {
+                    searchForm.classList.toggle('gemini-focus', isGemini);
+                }
+
+                setTimeout(() => searchModeIcon.classList.remove('animating'), 100);
+            }, 250);
+
             app.Storage.setString('searchMode', isGemini ? 'gemini' : 'google');
         }
 
@@ -88,7 +102,7 @@
             }
             const script = document.createElement('script');
             // JSONP callback
-            script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&callback=window.Homepage.handleSearchSuggestions`;
+            script.src = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}&callback=window.Homepage.handleSearchSuggestions`;
             document.body.appendChild(script);
             script.onload = () => document.body.removeChild(script);
             script.onerror = () => document.body.removeChild(script);
@@ -99,6 +113,9 @@
                 closeSuggestions();
                 return;
             }
+
+            // Limit to 10 suggestions as requested
+            suggestions = suggestions.slice(0, 10);
 
             currentFocus = -1;
             suggestionsBox.innerHTML = '';
@@ -156,6 +173,16 @@
         }
 
         // Input Listeners
+        searchInput.addEventListener('focus', () => {
+            searchForm.classList.add('focused');
+            if (isGeminiMode) searchForm.classList.add('gemini-focus');
+        });
+
+        searchInput.addEventListener('blur', () => {
+            searchForm.classList.remove('focused');
+            searchForm.classList.remove('gemini-focus');
+        });
+
         searchInput.addEventListener('input', app.debounce(function () {
             fetchSuggestions(this.value);
         }, 100));
