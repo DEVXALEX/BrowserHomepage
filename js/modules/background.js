@@ -61,7 +61,7 @@
         app.Storage.set('backgroundFavorites', favorites);
     }
 
-    function applyBackground(url) {
+    function applyBackground(url, skipValidation = false) {
         const bgElement = document.getElementById('global-background');
         if (!bgElement) return;
 
@@ -69,6 +69,12 @@
             bgElement.style.backgroundImage = 'none';
             currentSettings.currentImageUrl = '';
             saveSettings();
+            return;
+        }
+
+        // Optimization: Skip validation for initial load (cached URL) to render immediately
+        if (skipValidation) {
+            bgElement.style.backgroundImage = `url('${url}')`;
             return;
         }
 
@@ -130,7 +136,8 @@
 
     function applyAllEffects() {
         if (currentSettings.currentImageUrl) {
-            applyBackground(currentSettings.currentImageUrl);
+            // Skip validation on initial app load for speed
+            applyBackground(currentSettings.currentImageUrl, true);
         }
         applyBlur(currentSettings.blur);
         applyFilter(currentSettings.filter);

@@ -2,6 +2,25 @@
    BACKGROUND MODULE
 ===================================================== */
 
+/* Global Background Element */
+#global-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    /* Behind particles */
+    background-color: #0f0f0f;
+    /* Fallback color */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease-in-out, filter 0.3s ease;
+}
+
+
+
 /* Background Animation */
 .background-animation {
     position: fixed;
@@ -9,7 +28,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0;
+    z-index: -1;
+    /* Just above background image */
     overflow: hidden;
     pointer-events: none;
 }
