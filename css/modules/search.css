@@ -14,8 +14,57 @@
     border: 1px solid var(--border-color);
     backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px var(--shadow-color);
-    transition: border-radius 0.1s;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 2;
+    /* Keep form above the glow */
 }
+
+/* Restore simple wrapper */
+.search-wrapper {
+    position: relative;
+    /* No padding or z-index hacks needed for simple glow */
+}
+
+/* Ensure the wrapper doesn't capture clicks outside the form area if mostly transparent, 
+   but here it wraps the form tightly so it's fine. */
+
+/* Cleanup unused pseudo-elements if any remain */
+.search-wrapper::before,
+.search-wrapper::after {
+    display: none;
+}
+
+.search-wrapper.focused::before {
+    opacity: 1;
+}
+
+.search-wrapper.focused::after {
+    opacity: 0.5;
+    /* Soft outer glow */
+}
+
+.search-wrapper.focused::before,
+.search-wrapper.focused::after {
+    opacity: 1;
+}
+
+/* Hide default focused styles since we use wrapper glow */
+#search-form.focused {
+    border-color: #4d94ff !important;
+    /* Electric Blue Border */
+    box-shadow: 0 0 0 4px rgba(77, 148, 255, 0.25), 0 0 20px rgba(77, 148, 255, 0.4) !important;
+    /* Clean outer glow ring */
+    background-color: rgba(20, 20, 30, 0.95) !important;
+    z-index: 100;
+}
+
+@keyframes rotate-gradient {
+    to {
+        --angle: 360deg;
+    }
+}
+
 
 #search-form.suggestions-open {
     border-bottom-left-radius: 0;
@@ -45,18 +94,25 @@
 }
 
 #search-button {
+    background: transparent;
+    color: var(--accent-color);
     border: none;
-    background: var(--accent-color);
-    color: #111111;
+    border-left: 1px solid var(--border-color);
+    border-radius: 0 12px 12px 0;
     padding: 0 1.5rem;
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.4s ease;
 }
 
 #search-button:hover {
-    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.05);
+    /* Slightly darker on hover */
+    font-size: 1.15rem;
+    /* Increase font size as requested */
+    color: white;
+    /* Make text pop more */
 }
 
 /* Search Toggle */
@@ -73,12 +129,17 @@
 #search-mode-icon {
     font-size: 1.25rem;
     color: var(--text-secondary);
-    transition: color 0.4s ease;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     width: 20px;
     height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#search-mode-icon.animating {
+    transform: rotateY(360deg) scale(1.2);
+    opacity: 0.5;
 }
 
 #search-mode-icon.gemini-icon {
@@ -160,17 +221,34 @@ input:checked+.slider:before {
     left: 0;
     width: 100%;
     background-color: var(--widget-color);
-    border: 1px solid var(--border-color);
+    border: 1px solid #4d94ff;
+    /* Electric Blue Border */
+    border-top: none;
+    /* Seamless join */
     border-radius: 0 0 12px 12px;
     margin-top: 0;
     backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px var(--shadow-color);
+    box-shadow: 0 10px 30px rgba(77, 148, 255, 0.3) !important;
+    /* Blue Glow */
     z-index: 1000;
     overflow: hidden;
-    display: none;
-    max-height: 500px;
-    /* Increased from 300px */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: all 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 600px;
+    /* Increased from 500px */
     overflow-y: auto;
+}
+
+.search-suggestions.visible {
+    display: block;
+    /* Support for JS logic that checks display, though we use visibility mostly */
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .search-suggestions ul {
@@ -180,9 +258,11 @@ input:checked+.slider:before {
 }
 
 .search-suggestions li {
-    padding: 0.8rem 1rem;
+    padding: 1rem 1.25rem;
+    /* Chunkier items (up from 0.8rem) */
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    /* Larger text */
     color: var(--text-color);
     display: flex;
     align-items: center;
