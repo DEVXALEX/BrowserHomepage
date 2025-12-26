@@ -9,21 +9,21 @@
     };
 
     let currentSettings = {
-        mode: 'auto',
+        mode: 'custom',
         category: 'random',
-        customUrl: '',
-        blur: 0,
-        brightness: 100,
-        filter: 'none',
+        customUrl: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=2564&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        blur: 3,
+        brightness: 90,
+        filter: 'vibrant',
         timeBasedEnabled: false,
-        currentImageUrl: ''
+        currentImageUrl: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?q=80&w=2564&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
     };
 
     let favorites = [];
     let timeBasedInterval = null;
 
     app.initBackground = function () {
-        loadSettings();
+        const settingsLoaded = loadSettings();
         loadFavorites();
         initTabs();
         initCategoryButtons();
@@ -33,6 +33,7 @@
         initButtons();
         applyAllEffects();
 
+        // Removed random wallpaper fetch on first visit in favor of default settings
         if (currentSettings.timeBasedEnabled) {
             startTimeBasedChecker();
         }
@@ -42,7 +43,9 @@
         const saved = app.Storage.get('backgroundSettings', null);
         if (saved) {
             currentSettings = { ...currentSettings, ...saved };
+            return true;
         }
+        return false;
     }
 
     function saveSettings() {
@@ -392,20 +395,31 @@
 
         const applyCustomBtn = document.getElementById('apply-custom-btn');
         const bgUrlInput = document.getElementById('bg-url-input');
+        const pasteBgUrlBtn = document.getElementById('paste-bg-url-btn');
+
         if (applyCustomBtn && bgUrlInput) {
             bgUrlInput.value = currentSettings.customUrl;
-            applyCustomBtn.addEventListener('click', () => {
+
+            const handleApply = () => {
                 const url = bgUrlInput.value.trim();
                 if (url) {
                     applyCustomBtn.textContent = 'Verifying...';
                     applyCustomBtn.disabled = true;
 
+                    // Use common validation
                     validateImage(url)
                         .then(() => {
-                            document.body.style.backgroundImage = `url('${url}')`;
-                            currentSettings.customUrl = url;
-                            currentSettings.mode = 'custom'; // Switch mode to custom implicitly
+                            // Fix for Item 12: Use consistent apply function
+                            applyBackground(url); // This handles currentSettings update and saving
+
+                            // Explicitly switch mode to custom if not already done by applyBackground logic
+                            // (applyBackground mainly sets the image, ensure mode is consistent)
+                            currentSettings.mode = 'custom';
+                            const customTabBtn = document.querySelector('.bg-tab[data-tab="custom"]');
+                            if (customTabBtn) customTabBtn.classList.add('active'); // Visual update if needed
+
                             saveSettings();
+
                             applyCustomBtn.textContent = 'Apply Image';
                             applyCustomBtn.disabled = false;
                         })
@@ -415,7 +429,29 @@
                             applyCustomBtn.disabled = false;
                         });
                 }
+            };
+
+            applyCustomBtn.addEventListener('click', handleApply);
+
+            bgUrlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleApply();
+                }
             });
+
+            if (pasteBgUrlBtn) {
+                pasteBgUrlBtn.addEventListener('click', async () => {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        bgUrlInput.value = text;
+                        // Optional: Auto-submit on paste? Maybe too aggressive. let's just focus.
+                        bgUrlInput.focus();
+                    } catch (err) {
+                        console.error('Failed to read clipboard contents: ', err);
+                        alert('Clipboard access denied. Please paste manually.');
+                    }
+                });
+            }
         }
 
         const clearBgBtn = document.getElementById('clear-bg-btn');

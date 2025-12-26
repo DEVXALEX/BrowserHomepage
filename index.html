@@ -308,8 +308,13 @@
             <div class="bg-tab-content" id="custom-tab">
                 <div class="bg-section">
                     <label for="bg-url-input">Image URL</label>
-                    <input type="text" id="bg-url-input" placeholder="https://images.unsplash.com/..."
-                        autocomplete="off">
+                    <div class="input-group-joined">
+                        <input type="text" id="bg-url-input" placeholder="https://images.unsplash.com/..."
+                            autocomplete="off">
+                        <button id="paste-bg-url-btn" title="Paste from Clipboard">
+                            <i class="fa-solid fa-paste"></i>
+                        </button>
+                    </div>
                     <p class="form-help-text">Paste a direct link to an image. Leave empty to reset.</p>
                     <button id="apply-custom-btn" class="form-btn-save" style="width: 100%; margin-top: 0.5rem;">
                         Apply Image
