@@ -222,23 +222,26 @@
 /* Assigning visual order using grid-template-areas failed due to ordering, using direct placement */
 
 /* AUTO TAB LAYOUT */
-/* Left Column: Category (Tall) */
+/* Left Column: Category, then Filters */
 #auto-tab .bg-section:nth-child(1) {
+    /* Category */
     grid-column: 1;
-    grid-row: 1 / span 3;
-    /* Span all 3 rows of right column items */
+    grid-row: auto;
 }
 
-/* Right Column: Time, Adjustments, Filters (Stacked) */
-#auto-tab .bg-section:nth-child(2),
-/* Time */
-#auto-tab .bg-section:nth-child(3),
-/* Adjustments */
 #auto-tab .bg-section:nth-child(4) {
     /* Filters */
+    grid-column: 1;
+    grid-row: auto;
+}
+
+/* Right Column: Time, then Adjustments */
+#auto-tab .bg-section:nth-child(2),
+/* Time */
+#auto-tab .bg-section:nth-child(3) {
+    /* Adjustments */
     grid-column: 2;
     grid-row: auto;
-    /* Stack naturally */
 }
 
 /* CUSTOM TAB LAYOUT */
@@ -276,31 +279,60 @@
     margin-bottom: 0;
 }
 
-/* Compact Category Grid */
+/* Compact Category Grid -> Flexible Chips */
 .bg-category-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
 }
 
 .category-btn {
-    padding: 0.6rem;
+    flex: 1 0 auto;
+    min-width: 0;
+    padding: 0.6rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.category-btn i {
+    font-size: 0.8rem;
+    /* Scale down icon slightly */
+}
+
+.category-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border-color: var(--text-secondary);
+}
+
+.category-btn.active {
+    background: var(--accent-color);
+    color: #000;
+    border-color: var(--accent-color);
+    font-weight: 600;
 }
 
 /* Favorites Section - Horizontal Strip */
 .favorites-section {
     grid-column: 1 / -1;
-    /* Span full width (merged into grid or outside?) */
-    /* Wait, favorites-section is OUTSIDE tab-content in HTML. 
-       It needs to be styled separately. */
-    border-top: 1px solid var(--border-color);
-    padding: 1.5rem 2rem;
-    margin-top: 0;
-    margin-bottom: 0;
-    background: none;
-    /* Remove section box style */
-    border: none;
-    border-top: 1px solid var(--border-color);
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    /* Restore box style */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Restore border */
+    border-radius: 12px;
 }
 
 .favorites-header {
@@ -312,35 +344,23 @@
 .favorites-grid {
     display: flex;
     overflow-x: auto;
+    /* Allow scrolling */
     gap: 0.75rem;
     padding-bottom: 0.5rem;
-    scrollbar-width: thin;
-    /* Firefox */
     max-height: none;
-    /* Remove vertical limit */
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
 }
 
-/* Custom Scrollbar for horizontal strip */
+/* Hide scrollbar for Chrome/Safari */
 .favorites-grid::-webkit-scrollbar {
-    height: 6px;
-}
-
-.favorites-grid::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 3px;
-}
-
-.favorites-grid::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
+    display: none;
 }
 
 .favorite-item {
     position: relative;
-    width: 140px;
-    /* Fixed width */
-    height: 80px;
-    /* Fixed height */
+    width: 100px;
+    height: 60px;
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
@@ -359,6 +379,132 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Joined Input Group */
+/* Joined Input Group */
+.input-group-joined {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 1rem;
+    position: relative;
+    border-radius: 8px;
+    height: 50px;
+    /* Increased Fixed height */
+}
+
+.input-group-joined input {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+    height: 100%;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    /* Request: Text color white */
+    font-size: 1rem;
+    padding-left: 1rem;
+}
+
+.input-group-joined input:focus {
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 2;
+}
+
+.input-group-joined button {
+    flex: 0 0 auto;
+    width: 60px;
+    /* Wider paste button */
+    padding: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.input-group-joined button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.input-group-joined button:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Apply Image Button Specifics */
+#apply-custom-btn {
+    padding: 1rem;
+    /* Larger padding */
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--accent-color);
+    color: #000;
+    /* Contrast against accent */
+    border-radius: 8px;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+#apply-custom-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+#apply-custom-btn:active {
+    transform: translateY(0);
+}
+
+/* Filter Grid & Buttons */
+.filter-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.filter-btn,
+.filter-btn-custom {
+    flex: 1 0 auto;
+    min-width: 0;
+    /* Allow shrinking */
+    padding: 0.6rem 0.8rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.filter-btn:hover,
+.filter-btn-custom:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    border-color: var(--text-secondary);
+}
+
+.filter-btn.active,
+.filter-btn-custom.active {
+    background: var(--accent-color);
+    color: #000;
+    border-color: var(--accent-color);
+    font-weight: 600;
 }
 
 .bg-modal-actions {
