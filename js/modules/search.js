@@ -217,6 +217,25 @@
             }
         });
 
+        // Focus search on load
+        searchInput.focus();
+
+        // Redirect typing to search input if not focused (and not typing in another input)
+        document.addEventListener('keydown', function (e) {
+            // Ignore if Ctrl, Alt, or Meta keys are pressed
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+            // Ignore if the key is not a printable character (length > 1, e.g. "Escape", "Enter", "Shift")
+            if (e.key.length !== 1) return;
+
+            const target = e.target;
+            const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+            if (!isInput) {
+                searchInput.focus();
+            }
+        });
+
         // Load saved mode
         const savedMode = app.Storage.getString('searchMode', 'google');
         setSearchMode(savedMode === 'gemini');
