@@ -217,8 +217,10 @@
             }
         });
 
-        // Focus search on load
-        searchInput.focus();
+        // Focus search on load with a slight delay so browser doesn't steal focus
+        setTimeout(() => {
+            searchInput.focus();
+        }, 100);
 
         // Redirect typing to search input if not focused (and not typing in another input)
         document.addEventListener('keydown', function (e) {
