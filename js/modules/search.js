@@ -217,10 +217,23 @@
             }
         });
 
-        // Focus search on load with a slight delay so browser doesn't steal focus
-        setTimeout(() => {
+        // Focus search on load - Browsers often steal focus for the address bar when opening a new tab.
+        // We try to grab focus periodically for the first half second to combat this.
+        let focusAttempts = 0;
+        const focusInterval = setInterval(() => {
             searchInput.focus();
-        }, 100);
+            focusAttempts++;
+            if (document.activeElement === searchInput || focusAttempts >= 10) {
+                clearInterval(focusInterval);
+            }
+        }, 50);
+
+        // Also try to focus when the window actually gains focus (e.g., user clicks into the page area)
+        window.addEventListener('focus', () => {
+             if (document.activeElement !== searchInput && !document.querySelector('input:focus, textarea:focus')) {
+                 searchInput.focus();
+             }
+        });
 
         // Redirect typing to search input if not focused (and not typing in another input)
         document.addEventListener('keydown', function (e) {
